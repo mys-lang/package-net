@@ -32,7 +32,6 @@ def do_client():
     print("Connected.")
 
     data = b"Hi!"
-
     print(b"Sending {data.to_utf8()}.")
     client.write(data)
 
