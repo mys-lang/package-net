@@ -16,4 +16,9 @@ TCP server
 
 .. mysfile:: src/tcp/server.mys
 
+UDP socket
+----------
+
+.. mysfile:: src/udp.mys
+
 .. _Mys programming language: https://mys.readthedocs.io/en/latest/

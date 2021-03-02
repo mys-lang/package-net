@@ -1,5 +1,5 @@
-from udp import Socket
-from udp import Peer
+from argparse import Parser
+from net.udp import Socket
 
 ADDRESS: string = "127.0.0.1"
 PORT: u32 = 59001
@@ -9,24 +9,23 @@ def do_server():
     server.bind(ADDRESS, PORT)
 
     while True:
-        data, peer = server.read_from()
-        server.write_to(data, peer)
+        data, peer = server.receive_from()
+        server.send_to(data, peer)
 
 def do_client():
     client = Socket()
-    server.bind(ADDRESS, PORT + 1)
-    client.write_to(b"Hello!", Peer(ADDRESS, PORT))
-    print(client.read())
+    client.bind(ADDRESS, PORT + 1)
+    client.connect(ADDRESS, PORT)
+    client.send(b"Hello!")
+    print(client.receive())
 
 def main(argv: [string]):
     parser = Parser("udp")
-    encode = parser.add_subcommand("server")
-    decode = parser.add_subcommand("client")
+    parser.add_subcommand("server")
+    parser.add_subcommand("client")
     command, _ = parser.parse(argv).subcommand()
 
-    if command == 'server':
+    if command == "server":
         do_server()
-    elif command == 'client':
+    elif command == "client":
         do_client()
-    else:
-        raise ValueError(command)

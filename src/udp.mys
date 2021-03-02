@@ -1,0 +1,25 @@
+class Address:
+    pass
+
+class Socket:
+
+    def bind(self, host: string, port: u32):
+        pass
+
+    def connect(self, host: string, port: u32):
+        pass
+
+    def disconnect(self):
+        pass
+
+    def send(self, data: bytes):
+        pass
+
+    def send_to(self, data: bytes, address: Address):
+        pass
+
+    def receive(self) -> bytes:
+        return None
+
+    def receive_from(self) -> (bytes, Address):
+        return (b"", Address())
