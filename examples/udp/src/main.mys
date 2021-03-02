@@ -23,9 +23,11 @@ def main(argv: [string]):
     parser = Parser("udp")
     parser.add_subcommand("server")
     parser.add_subcommand("client")
-    command, _ = parser.parse(argv).subcommand()
 
-    if command == "server":
-        do_server()
-    elif command == "client":
-        do_client()
+    command = parser.parse(argv).subcommand()[0]
+
+    match command:
+        case "server":
+            do_server()
+        case "client":
+            do_client()
