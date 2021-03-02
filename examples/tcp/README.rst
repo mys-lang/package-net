@@ -7,7 +7,7 @@ and echos any received data.
 .. code-block:: text
 
    $ mys run server
-   Accepting clients on 127.0.0.1:3232.
+   Accepting clients on localhost:59000.
    Client accepted.
    Echoing data.
    Echoing data.
@@ -21,7 +21,7 @@ then the connections is closed.
 .. code-block:: text
 
    $ mys run client
-   Connecting to 127.0.0.1:3232.
+   Connecting to localhost:59000.
    Connected.
    Sending "Hi!".
    Received "Hi!".
