@@ -1,5 +1,6 @@
-from tcp import Server
-from tcp import Client
+from argparse import Parser
+from net.tcp.server import Server
+from net.tcp.client import Client
 
 ADDRESS: string = "localhost"
 PORT: u32 = 59000
@@ -31,9 +32,7 @@ def main(argv: [string]):
     parser.add_subcommand("client")
     command, _ = parser.parse(argv).subcommand()
 
-    if command == 'server':
+    if command == "server":
         do_server()
-    elif command == 'client':
+    elif command == "client":
         do_client()
-    else:
-        raise ValueError(command)
