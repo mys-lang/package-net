@@ -1,3 +1,5 @@
+from fiber import suspend
+
 class Client:
 
     def disconnect(self):
@@ -20,6 +22,8 @@ class Client:
 
         """
 
+        suspend()
+
         return None
 
     def read_into(self, data: bytes, offset: u32, size: u32):
@@ -27,10 +31,14 @@ class Client:
 
         """
 
+        suspend()
+
 class Server:
 
     def listen(self, host: string, port: u32):
         pass
 
     def accept(self) -> Client:
+        suspend()
+
         return None

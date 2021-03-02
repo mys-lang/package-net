@@ -1,7 +1,70 @@
+from fiber import suspend
+
+c"""
+static void on_connect_complete(uv_connect_t * req, int status) {
+    if (status == -1) {
+        fprintf(stderr, "error on_connect_complete");
+        return;
+    }
+
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <uv.h>
+
+void echo_read(uv_stream_t *server, ssize_t nread, const uv_buf_t* buf) {
+    if (nread == -1) {
+        fprintf(stderr, "error echo_read");
+        return;
+    }
+
+    printf("result: %s\n", buf->base);
+}
+
+void alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
+    buf->base = malloc(suggested_size);
+    buf->len = suggested_size;
+}
+
+void on_write_end(uv_write_t *req, int status) {
+    if (status == -1) {
+        fprintf(stderr, "error on_write_end");
+        return;
+    }
+    uv_read_start(req->handle, alloc_buffer, echo_read);
+}
+
+void on_connect(uv_connect_t * req, int status) {
+    if (status == -1) {
+        fprintf(stderr, "error on_write_end");
+        return;
+    }
+    char buffer[100];
+    uv_buf_t buf = uv_buf_init(buffer, sizeof(buffer));
+    char *message = "hello";
+    buf.len = strlen(message);
+    buf.base = message;
+    uv_stream_t *tcp = req->handle;
+    uv_write_t write_req;
+    int buf_count = 1;
+    uv_write(&write_req, tcp, &buf, buf_count, on_write_end);
+}
+"""
+
 class Client:
+    c"uv_tcp_t m_socket;"
+    c"uv_connect_t m_connect;"
+
+    def __init__(self):
+        c"uv_tcp_init(uv_default_loop(), &m_socket);"
 
     def connect(self, host: string, port: u32):
-        pass
+        c"""
+        uv_tcp_connect(&m_connect, &m_socket, &address, on_connect_complete);
+        """
+
+        suspend()
 
     def disconnect(self):
         pass
@@ -13,7 +76,9 @@ class Client:
         pass
 
     def read(self) -> bytes:
+        suspend()
+
         return None
 
     def read_into(self, data: bytes, offset: u32, size: u32):
-        pass
+        suspend()
