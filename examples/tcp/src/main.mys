@@ -8,23 +8,39 @@ PORT: u32 = 59000
 def do_server():
     server = Server()
     server.listen(ADDRESS, PORT)
+    print(f"Accepting clients on {ADDRESS}:{PORT}.")
 
     while True:
         client = server.accept()
+        print("Client accepted.")
 
         while True:
             data = client.read(1)
 
             if data is None:
+                print("Disconnected.")
                 break
 
+            print("Echoing data.")
             client.write(data)
 
 def do_client():
     client = Client()
+
+    print(f"Connecting to {ADDRESS}:{PORT}.")
     client.connect(ADDRESS, PORT)
-    client.write(b"Hello!")
-    print(client.read(6))
+    print("Connected.")
+
+    data = b"Hi!"
+
+    print(b"Sending {data.to_utf8()}.")
+    client.write(data)
+
+    data = client.read(3)
+    print(f"Received {string(data)}.")
+
+    print("Disconnecting.")
+    client.disconnect()
 
 def main(argv: [string]):
     parser = Parser("tcp")

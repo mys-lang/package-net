@@ -9,9 +9,10 @@ and echos any received data.
    $ mys run server
    Accepting clients on 127.0.0.1:3232.
    Client accepted.
-   Received 'Hello!'.
-   Sending 'Hello!'.
-   Closed.
+   Echoing data.
+   Echoing data.
+   Echoing data.
+   Disconnected.
 
 Start a TCP client in another terminal. It connects to the server and
 writes ``Hello!`` to it. The server responds with the same data and
@@ -22,6 +23,6 @@ then the connections is closed.
    $ mys run client
    Connecting to 127.0.0.1:3232.
    Connected.
-   Sending 'Hello!'.
-   Received 'Hello!'.
-   Closing.
+   Sending "Hi!".
+   Received "Hi!".
+   Disconnecting.
