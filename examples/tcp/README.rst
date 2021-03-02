@@ -15,8 +15,8 @@ and echos any received data.
    Disconnected.
 
 Start a TCP client in another terminal. It connects to the server and
-writes ``Hello!`` to it. The server responds with the same data and
-then the connections is closed.
+writes ``Hi!`` to it. The server responds with the same data and then
+the connections is closed.
 
 .. code-block:: text
 
