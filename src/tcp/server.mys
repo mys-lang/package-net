@@ -1,0 +1,36 @@
+class Client:
+
+    def disconnect(self):
+        """Disconnect from the server.
+
+        """
+
+    def write(self, data: bytes):
+        """Write given data to the server.
+
+        """
+
+    def write_from(self, data: bytes, offset: u32, size: u32):
+        """Write given data to the server.
+
+        """
+
+    def read(self, size: u32) -> bytes:
+        """Read data from the server.
+
+        """
+
+        return None
+
+    def read_into(self, data: bytes, offset: u32, size: u32):
+        """Read data from the server.
+
+        """
+
+class Server:
+
+    def listen(self, host: string, port: u32):
+        pass
+
+    def accept(self) -> Client:
+        return None

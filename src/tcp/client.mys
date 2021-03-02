@@ -1,0 +1,19 @@
+class Client:
+
+    def connect(self, host: string, port: u32):
+        pass
+
+    def disconnect(self):
+        pass
+
+    def write(self, data: bytes):
+        pass
+
+    def write_from(self, data: bytes, offset: u32, size: u32):
+        pass
+
+    def read(self) -> bytes:
+        return None
+
+    def read_into(self, data: bytes, offset: u32, size: u32):
+        pass
