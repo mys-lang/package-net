@@ -6,6 +6,13 @@ class TcpError(Error):
     message: string
 
 c"""
+class WriteRequest {
+public:
+    uv_buf_t m_buf;
+    uv_write_t m_request;
+    Bytes m_data;
+};
+
 static void on_connect_complete(uv_connect_t *request_p, int status)
 {
     Client *client_p = (Client *)(request_p->data);
@@ -49,14 +56,14 @@ static void read_alloc(uv_handle_t *handle_p, size_t size, uv_buf_t *buf_p)
 
 static void on_write_complete(uv_write_t *request_p, int status)
 {
-    Client *client_p = (Client *)(request_p->data);
+    WriteRequest *write_request_p = (WriteRequest *)(request_p->data);
 
-    if (status == -1) {
-        fprintf(stderr, "error on_write_complete");
-        return;
+    if (status != 0) {
+        std::cout << "ToDo: TCP write failed." << std::endl;
+        exit(1);
     }
 
-    resume(client_p->_fiber);
+    delete write_request_p;
 }
 
 static void on_getaddrinfo_complete(uv_getaddrinfo_t *resolver_p,
@@ -85,7 +92,6 @@ class Client:
     c"struct addrinfo m_hints;"
     c"uv_getaddrinfo_t m_resolver;"
     c"uv_buf_t m_buf;"
-    c"uv_write_t m_write_request;"
     c"Bytes m_read_data;"
     c"u32 m_read_offset;"
     _fiber: Fiber
@@ -131,19 +137,17 @@ class Client:
 
     def write(self, data: bytes):
         c"""
-        m_buf = uv_buf_init((char *)data.m_bytes->data(), data.m_bytes->size());
-        m_write_request.data = this;
-        uv_write(&m_write_request,
+        WriteRequest *request_p = new WriteRequest();
+        request_p->m_buf = uv_buf_init((char *)data.m_bytes->data(),
+                                       data.m_bytes->size());
+        request_p->m_request.data = request_p;
+        request_p->m_data = data;
+        uv_write(&request_p->m_request,
                  (uv_stream_s *)&m_socket,
-                 &m_buf,
+                 &request_p->m_buf,
                  1,
                  on_write_complete);
         """
-
-        # ToDo: Should not block!
-        self._fiber = current()
-        suspend()
-        self._fiber = None
 
     def write_from(self, data: bytes, offset: u32, size: u32):
         pass
