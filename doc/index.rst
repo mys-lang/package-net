@@ -19,6 +19,8 @@ TCP server
 UDP socket
 ----------
 
+.. warning:: UDP sockets are not yet implemented!
+
 .. mysfile:: src/udp.mys
 
 .. _Mys programming language: https://mys.readthedocs.io/en/latest/
