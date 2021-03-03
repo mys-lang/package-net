@@ -17,11 +17,11 @@ def do_server():
         while True:
             data = client.read(1)
 
-            if data == b"":
+            if data is None:
                 print("Disconnected.")
                 break
 
-            print("Echoing data.")
+            print("Echoing byte.")
             client.write(data)
 
 def do_client():
