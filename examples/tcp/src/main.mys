@@ -7,7 +7,7 @@ PORT: u32 = 59000
 
 def do_server():
     server = Server()
-    server.listen(ADDRESS, PORT)
+    server.listen(PORT)
     print(f"Accepting clients on {ADDRESS}:{PORT}.")
 
     while True:
@@ -17,7 +17,7 @@ def do_server():
         while True:
             data = client.read(1)
 
-            if data is None:
+            if data == b"":
                 print("Disconnected.")
                 break
 

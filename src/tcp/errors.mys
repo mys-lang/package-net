@@ -1,0 +1,2 @@
+class TcpError(Error):
+    message: string

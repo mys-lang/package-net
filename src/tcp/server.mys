@@ -1,6 +1,103 @@
+from fiber import Fiber
+from fiber import current
 from fiber import suspend
+from .errors import TcpError
+
+c"""
+class WriteRequest {
+public:
+    uv_buf_t m_buf;
+    uv_write_t m_request;
+    Bytes m_data;
+};
+
+static void on_client_connected(uv_stream_t *socket_p, int status)
+{
+    Server *server_p = (Server *)(socket_p->data);
+
+    if (status < 0) {
+        return;
+    }
+
+    if (server_p->_accepted_clients->__len__() == 10) {
+        return;
+    }
+
+    std::shared_ptr<Client> client = std::make_shared<Client>();
+
+    if (uv_accept(socket_p, (uv_stream_t *)&client->m_socket) == 0) {
+        server_p->_accepted_clients->append(client);
+
+        if (server_p->_fiber) {
+            resume(server_p->_fiber);
+        }
+    }
+}
+
+static void on_read_complete(uv_stream_t *request_p,
+                             ssize_t nread,
+                             const uv_buf_t* buf_p)
+{
+    Client *client_p = (Client *)(request_p->data);
+    bool completed = false;
+
+    if (nread > 0) {
+        client_p->_read_offset += nread;
+
+        if (client_p->_read_offset == client_p->_read_data.m_bytes->size()) {
+            completed = true;
+        }
+    } else if (nread < 0) {
+        completed = true;
+        client_p->_read_data.m_bytes->resize(0);
+    }
+
+    if (completed) {
+        uv_read_stop(request_p);
+        resume(client_p->_fiber);
+    }
+}
+
+static void read_alloc(uv_handle_t *handle_p, size_t size, uv_buf_t *buf_p)
+{
+    Client *client_p = (Client *)(handle_p->data);
+
+    buf_p->base = ((char *)client_p->_read_data.m_bytes->data()
+                   + client_p->_read_offset);
+    buf_p->len = client_p->_read_data.m_bytes->size() - client_p->_read_offset;
+}
+
+static void on_write_complete(uv_write_t *request_p, int status)
+{
+    WriteRequest *write_request_p = (WriteRequest *)(request_p->data);
+
+    if (status != 0) {
+        std::cout << "ToDo: TCP write failed." << std::endl;
+        exit(1);
+    }
+
+    delete write_request_p;
+}
+"""
 
 class Client:
+    c"uv_tcp_t m_socket;"
+    c"uv_buf_t m_buf;"
+    _read_data: bytes
+    _read_offset: u32
+    _fiber: Fiber
+
+    def __init__(self):
+        c"""
+        uv_tcp_init(uv_default_loop(), &m_socket);
+        m_socket.data = this;
+        """
+
+        self._fiber = None
+
+    def _ensure_one_caller(self):
+        if self._fiber is not None:
+            raise TcpError("Only one fiber may perform blocking operations.")
 
     def disconnect(self):
         """Disconnect from the server.
@@ -12,21 +109,81 @@ class Client:
 
         """
 
+        c"""
+        WriteRequest *request_p = new WriteRequest();
+        request_p->m_buf = uv_buf_init((char *)data.m_bytes->data(),
+                                       data.m_bytes->size());
+        request_p->m_request.data = request_p;
+        request_p->m_data = data;
+        uv_write(&request_p->m_request,
+                 (uv_stream_s *)&m_socket,
+                 &request_p->m_buf,
+                 1,
+                 on_write_complete);
+        """
+
     def read(self, size: u32) -> bytes:
-        """Read data from the server.
+        """Read data from the server. Always returns exactly given number of
+        bytes, or no data if disconnected.
 
         """
 
-        suspend()
+        self._ensure_one_caller()
 
-        return None
+        self._read_offset = 0;
+
+        c"""
+        _read_data = Bytes(size);
+        uv_read_start((uv_stream_t*)&m_socket, read_alloc, on_read_complete);
+        """
+
+        self._fiber = current()
+        suspend()
+        self._fiber = None
+
+        data = self._read_data
+        self._read_data = None
+
+        return data
 
 class Server:
+    c"uv_tcp_t m_socket;"
+    c"uv_connect_t m_listen;"
+    c"uv_buf_t m_buf;"
+    _fiber: Fiber
+    _status: i32
+    _accepted_clients: [Client]
 
-    def listen(self, host: string, port: u32):
-        pass
+    def __init__(self):
+        c"""
+        uv_tcp_init(uv_default_loop(), &m_socket);
+        m_socket.data = this;
+        """
+
+        self._fiber = None
+        self._accepted_clients = []
+
+    def listen(self, port: u32):
+        """Start listening for clients to connect to given `port` on any
+        interface.
+
+        """
+
+        c"""
+        struct sockaddr_in address;
+
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = INADDR_ANY;
+        address.sin_port = htons(port);
+
+        uv_tcp_bind(&m_socket, (const struct sockaddr*)&address, 0);
+        uv_listen((uv_stream_t *)&m_socket, 10, on_client_connected);
+        """
 
     def accept(self) -> Client:
-        suspend()
+        if len(self._accepted_clients) == 0:
+            self._fiber = current()
+            suspend()
+            self._fiber = None
 
-        return None
+        return self._accepted_clients.pop()

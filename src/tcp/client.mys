@@ -1,9 +1,7 @@
 from fiber import Fiber
-from fiber import suspend
 from fiber import current
-
-class TcpError(Error):
-    message: string
+from fiber import suspend
+from .errors import TcpError
 
 c"""
 class WriteRequest {
