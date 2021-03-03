@@ -17,7 +17,7 @@ static void on_connect_complete(uv_connect_t *request_p, int status)
 {
     Client *client_p = (Client *)(request_p->data);
 
-    client_p->_connect_status = status;
+    client_p->_status = status;
     resume(client_p->_fiber);
 }
 
@@ -26,19 +26,20 @@ static void on_read_complete(uv_stream_t *request_p,
                              const uv_buf_t* buf_p)
 {
     Client *client_p = (Client *)(request_p->data);
+    bool completed = false;
 
-    if (nread < 0) {
-        fprintf(stderr, "error on_read_complete");
-        return;
+    if (nread > 0) {
+        client_p->_read_offset += nread;
+
+        if (client_p->_read_offset == client_p->_read_data.m_bytes->size()) {
+            completed = true;
+        }
+    } else if (nread < 0) {
+        completed = true;
+        client_p->_read_data.m_bytes->resize(0);
     }
 
-    if (nread == 0) {
-        return;
-    }
-
-    client_p->m_read_offset += nread;
-
-    if (client_p->m_read_offset == client_p->m_read_data.m_bytes->size()) {
+    if (completed) {
         uv_read_stop(request_p);
         resume(client_p->_fiber);
     }
@@ -48,9 +49,9 @@ static void read_alloc(uv_handle_t *handle_p, size_t size, uv_buf_t *buf_p)
 {
     Client *client_p = (Client *)(handle_p->data);
 
-    buf_p->base = ((char *)client_p->m_read_data.m_bytes->data()
-                   + client_p->m_read_offset);
-    buf_p->len = client_p->m_read_data.m_bytes->size() - client_p->m_read_offset;
+    buf_p->base = ((char *)client_p->_read_data.m_bytes->data()
+                   + client_p->_read_offset);
+    buf_p->len = client_p->_read_data.m_bytes->size() - client_p->_read_offset;
 }
 
 static void on_write_complete(uv_write_t *request_p, int status)
@@ -91,10 +92,10 @@ class Client:
     c"struct addrinfo m_hints;"
     c"uv_getaddrinfo_t m_resolver;"
     c"uv_buf_t m_buf;"
-    c"Bytes m_read_data;"
-    c"u32 m_read_offset;"
+    _read_data: bytes
+    _read_offset: u32
     _fiber: Fiber
-    _connect_status: i32
+    _status: i32
 
     def __init__(self):
         c"""
@@ -102,7 +103,19 @@ class Client:
         m_socket.data = this;
         """
 
+        self._fiber = None
+
+    def _ensure_one_caller(self):
+        if self._fiber is not None:
+            raise TcpError("Only one fiber may perform blocking operations.")
+
     def connect(self, host: string, port: u32):
+        """Connect to a server using given `host` and `port`.
+
+        """
+
+        self._ensure_one_caller()
+
         host_utf8 = host.to_utf8()
         host_utf8 += 0
         port_utf8 = str(port).to_utf8()
@@ -128,13 +141,21 @@ class Client:
         suspend()
         self._fiber = None
 
-        if self._connect_status != 0:
+        if self._status != 0:
             raise TcpError("Connect failed.")
 
     def disconnect(self):
-        pass
+        """Disconnect from the server.
+
+        """
+
+        raise NotImplementedError()
 
     def write(self, data: bytes):
+        """Write data to the server.
+
+        """
+
         c"""
         WriteRequest *request_p = new WriteRequest();
         request_p->m_buf = uv_buf_init((char *)data.m_bytes->data(),
@@ -152,11 +173,17 @@ class Client:
         pass
 
     def read(self, size: u32) -> bytes:
-        data: bytes = None
+        """Read data from the server. Always returns exactly given number of
+        bytes, or no data if disconnected.
+
+        """
+
+        self._ensure_one_caller()
+
+        self._read_offset = 0;
 
         c"""
-        m_read_data = Bytes(size);
-        m_read_offset = 0;
+        _read_data = Bytes(size);
         uv_read_start((uv_stream_t*)&m_socket, read_alloc, on_read_complete);
         """
 
@@ -164,10 +191,12 @@ class Client:
         suspend()
         self._fiber = None
 
-        c"data = m_read_data;"
+        data = self._read_data
+        self._read_data = None
 
         return data
 
     def read_into(self, data: bytes, offset: u32, size: u32):
+        self._ensure_one_caller()
+
         raise NotImplementedError()
-        suspend()
