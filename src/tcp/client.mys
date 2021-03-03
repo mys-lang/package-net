@@ -2,6 +2,7 @@ from fiber import Fiber
 from fiber import current
 from fiber import suspend
 from .errors import TcpError
+from .server import Server
 
 c"""
 class WriteRequest {
@@ -190,3 +191,29 @@ class Client:
         self._read_data = None
 
         return data
+
+class _ServerCommunicationFiber(Fiber):
+    server: Server
+
+    def run(self):
+        client = self.server.accept()
+        assert client.read(1) == b"1"
+        assert client.read(9) == b"234567890"
+        client.write(b"0")
+        client.write(b"987654321")
+
+@test
+def test_server_communication():
+    port: u32 = 50222
+
+    server = Server()
+    server.listen(port)
+    server_fiber = _ServerCommunicationFiber(server)
+    server_fiber.start()
+
+    client = Client()
+    client.connect("localhost", port)
+    client.write(b"123456789")
+    client.write(b"0")
+    assert client.read(9) == b"098765432"
+    assert client.read(1) == b"1"
