@@ -3,6 +3,8 @@ About
 
 Networking in the `Mys programming language`_.
 
+Project: https://github.com/mys-lang/package-net
+
 Functions and types
 ===================
 

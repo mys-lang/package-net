@@ -14,7 +14,7 @@ import toml
 
 # -- Project information -----------------------------------------------------
 
-project = 'Net'
+project = 'net'
 # copyright = ''
 author = '"Erik Moqvist <erik.moqvist@gmail.com>"'
 
