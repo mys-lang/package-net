@@ -169,9 +169,6 @@ class Client:
                  on_write_complete);
         """
 
-    def write_from(self, data: bytes, offset: u32, size: u32):
-        pass
-
     def read(self, size: u32) -> bytes:
         """Read data from the server. Always returns exactly given number of
         bytes, or no data if disconnected.
@@ -195,8 +192,3 @@ class Client:
         self._read_data = None
 
         return data
-
-    def read_into(self, data: bytes, offset: u32, size: u32):
-        self._ensure_one_caller()
-
-        raise NotImplementedError()
