@@ -168,6 +168,10 @@ class Client:
         return data
 
 class Server:
+    """A TCP server, listening for clients to connect.
+
+    """
+
     c"uv_tcp_t m_socket;"
     c"uv_connect_t m_listen;"
     c"uv_buf_t m_buf;"
@@ -202,6 +206,10 @@ class Server:
         """
 
     def accept(self) -> Client:
+        """Wait for a client to connect and return it.
+
+        """
+
         if len(self._accepted_clients) == 0:
             self._fiber = current()
             suspend()
