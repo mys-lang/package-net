@@ -23,6 +23,6 @@ the connections is closed.
    $ mys run client
    Connecting to localhost:59000.
    Connected.
-   Sending "Hi!".
-   Received "Hi!".
+   Sending 'Hi!'.
+   Received 'Hi!'.
    Disconnecting.

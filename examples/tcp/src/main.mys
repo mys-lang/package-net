@@ -32,11 +32,11 @@ def do_client():
     print("Connected.")
 
     data = b"Hi!"
-    print(b"Sending {data.to_utf8()}.")
+    print(f"Sending '{string(data)}'.")
     client.write(data)
 
     data = client.read(3)
-    print(f"Received {string(data)}.")
+    print(f"Received '{string(data)}'.")
 
     print("Disconnecting.")
     client.disconnect()

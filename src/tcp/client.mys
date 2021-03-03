@@ -1,84 +1,167 @@
+from fiber import Fiber
 from fiber import suspend
+from fiber import current
 
 c"""
-// static void on_connect_complete(uv_connect_t * req, int status) {
-//     if (status == -1) {
-//         fprintf(stderr, "error on_connect_complete");
-//         return;
-//     }
-//
-// #include <stdio.h>
-// #include <unistd.h>
-// #include <string.h>
-// #include <stdlib.h>
-// #include <uv.h>
-//
-// void echo_read(uv_stream_t *server, ssize_t nread, const uv_buf_t* buf) {
-//     if (nread == -1) {
-//         fprintf(stderr, "error echo_read");
-//         return;
-//     }
-//
-//     printf("result: %s\n", buf->base);
-// }
-//
-// void alloc_buffer(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-//     buf->base = malloc(suggested_size);
-//     buf->len = suggested_size;
-// }
-//
-// void on_write_end(uv_write_t *req, int status) {
-//     if (status == -1) {
-//         fprintf(stderr, "error on_write_end");
-//         return;
-//     }
-//     uv_read_start(req->handle, alloc_buffer, echo_read);
-// }
-//
-// void on_connect(uv_connect_t * req, int status) {
-//     if (status == -1) {
-//         fprintf(stderr, "error on_write_end");
-//         return;
-//     }
-//     char buffer[100];
-//     uv_buf_t buf = uv_buf_init(buffer, sizeof(buffer));
-//     char *message = "hello";
-//     buf.len = strlen(message);
-//     buf.base = message;
-//     uv_stream_t *tcp = req->handle;
-//     uv_write_t write_req;
-//     int buf_count = 1;
-//     uv_write(&write_req, tcp, &buf, buf_count, on_write_end);
-// }
+static void on_connect_complete(uv_connect_t *request_p, int status)
+{
+    Client *client_p = (Client *)(request_p->data);
+
+    if (status == -1) {
+        fprintf(stderr, "error on_connect_complete");
+        return;
+    }
+
+    resume(client_p->_fiber);
+}
+
+static void on_read_complete(uv_stream_t *request_p,
+                             ssize_t nread,
+                             const uv_buf_t* buf_p)
+{
+    Client *client_p = (Client *)(request_p->data);
+
+    if (nread < 0) {
+        fprintf(stderr, "error on_read_complete");
+        return;
+    }
+
+    if (nread == 0) {
+        return;
+    }
+
+    memcpy(client_p->m_read_data.m_bytes->data() + client_p->m_read_offset,
+           buf_p->base,
+           nread);
+    free(buf_p->base);
+    client_p->m_read_offset += nread;
+
+    if (client_p->m_read_offset == client_p->m_read_data.m_bytes->size()) {
+        uv_read_stop(request_p);
+        resume(client_p->_fiber);
+    }
+}
+
+static void read_alloc(uv_handle_t *handle_p, size_t size, uv_buf_t *buf_p)
+{
+    buf_p->base = (char *)malloc(size);
+    buf_p->len = size;
+}
+
+static void on_write_complete(uv_write_t *request_p, int status)
+{
+    Client *client_p = (Client *)(request_p->data);
+
+    if (status == -1) {
+        fprintf(stderr, "error on_write_complete");
+        return;
+    }
+
+    resume(client_p->_fiber);
+}
+
+static void on_getaddrinfo_complete(uv_getaddrinfo_t *resolver_p,
+                                    int status,
+                                    struct addrinfo *info_p)
+{
+    Client *client_p = (Client *)(resolver_p->data);
+
+    if (status < 0) {
+        fprintf(stderr, "getaddrinfo callback error %s\n", uv_err_name(status));
+        return;
+    }
+
+    client_p->m_connect.data = client_p;
+    uv_tcp_connect(&client_p->m_connect,
+                   &client_p->m_socket,
+                   (const struct sockaddr*)info_p->ai_addr,
+                   on_connect_complete);
+    uv_freeaddrinfo(info_p);
+}
 """
 
 class Client:
     c"uv_tcp_t m_socket;"
     c"uv_connect_t m_connect;"
+    c"struct addrinfo m_hints;"
+    c"uv_getaddrinfo_t m_resolver;"
+    c"uv_buf_t m_buf;"
+    c"uv_write_t m_write_request;"
+    c"Bytes m_read_data;"
+    c"u32 m_read_offset;"
+    _fiber: Fiber
 
     def __init__(self):
-        c"uv_tcp_init(uv_default_loop(), &m_socket);"
+        c"""
+        uv_tcp_init(uv_default_loop(), &m_socket);
+        m_socket.data = this;
+        """
 
     def connect(self, host: string, port: u32):
+        host_utf8 = host.to_utf8()
+        host_utf8 += 0
+        port_utf8 = str(port).to_utf8()
+        port_utf8 += 0
+        self._fiber = current()
+
         c"""
-        // uv_tcp_connect(&m_connect, &m_socket, &address, on_connect_complete);
+        m_resolver.data = this;
+
+        m_hints.ai_family = PF_INET;
+        m_hints.ai_socktype = SOCK_STREAM;
+        m_hints.ai_protocol = IPPROTO_TCP;
+        m_hints.ai_flags = 0;
+
+        uv_getaddrinfo(uv_default_loop(),
+                       &m_resolver,
+                       on_getaddrinfo_complete,
+                       (const char *)host_utf8.m_bytes->data(),
+                       (const char *)port_utf8.m_bytes->data(),
+                       &m_hints);
         """
 
         suspend()
+        self._fiber = None
 
     def disconnect(self):
         pass
 
     def write(self, data: bytes):
-        pass
+        c"""
+        m_buf = uv_buf_init((char *)data.m_bytes->data(), data.m_bytes->size());
+        m_write_request.data = this;
+        uv_write(&m_write_request,
+                 (uv_stream_s *)&m_socket,
+                 &m_buf,
+                 1,
+                 on_write_complete);
+        """
+
+        # ToDo: Should not block!
+        self._fiber = current()
+        suspend()
+        self._fiber = None
 
     def write_from(self, data: bytes, offset: u32, size: u32):
         pass
 
     def read(self, size: u32) -> bytes:
-        suspend()
+        data: bytes = None
 
-        return None
+        c"""
+        m_read_data = Bytes(size);
+        m_read_offset = 0;
+        uv_read_start((uv_stream_t*)&m_socket, read_alloc, on_read_complete);
+        """
+
+        self._fiber = current()
+        suspend()
+        self._fiber = None
+
+        c"data = m_read_data;"
+
+        return data
 
     def read_into(self, data: bytes, offset: u32, size: u32):
+        raise NotImplementedError()
         suspend()
