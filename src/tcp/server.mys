@@ -78,11 +78,21 @@ static void on_write_complete(uv_write_t *request_p, int status)
 
     delete write_request_p;
 }
+
+static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
+{
+    Client *client_p = (Client *)(request_p->data);
+
+    resume(client_p->_fiber);
+}
 """
 
 class Client:
-    c"uv_tcp_t m_socket;"
-    c"uv_buf_t m_buf;"
+    c"""
+    uv_tcp_t m_socket;
+    uv_buf_t m_buf;
+    uv_shutdown_t m_shutdown;
+    """
     _read_data: bytes
     _read_offset: u32
     _fiber: Fiber
@@ -99,10 +109,23 @@ class Client:
         if self._fiber is not None:
             raise TcpError("Only one fiber may perform blocking operations.")
 
+    def _wait_for_completion(self):
+        self._fiber = current()
+        suspend()
+        self._fiber = None
+
     def disconnect(self):
         """Disconnect from the server.
 
         """
+
+        self._ensure_one_caller()
+
+        c"""
+        uv_shutdown(&m_shutdown, (uv_stream_t *)&m_socket, on_shutdown_complete);
+        """
+
+        self._wait_for_completion()
 
     def write(self, data: bytes):
         """Write given data to the server.
@@ -137,9 +160,7 @@ class Client:
         uv_read_start((uv_stream_t*)&m_socket, read_alloc, on_read_complete);
         """
 
-        self._fiber = current()
-        suspend()
-        self._fiber = None
+        self._wait_for_completion()
 
         data = self._read_data
         self._read_data = None

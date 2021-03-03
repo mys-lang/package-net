@@ -83,14 +83,24 @@ static void on_getaddrinfo_complete(uv_getaddrinfo_t *resolver_p,
                    on_connect_complete);
     uv_freeaddrinfo(info_p);
 }
+
+static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
+{
+    Client *client_p = (Client *)(request_p->data);
+
+    resume(client_p->_fiber);
+}
 """
 
 class Client:
-    c"uv_tcp_t m_socket;"
-    c"uv_connect_t m_connect;"
-    c"struct addrinfo m_hints;"
-    c"uv_getaddrinfo_t m_resolver;"
-    c"uv_buf_t m_buf;"
+    c"""
+    uv_tcp_t m_socket;
+    uv_connect_t m_connect;
+    struct addrinfo m_hints;
+    uv_getaddrinfo_t m_resolver;
+    uv_buf_t m_buf;
+    uv_shutdown_t m_shutdown;
+    """
     _read_data: bytes
     _read_offset: u32
     _fiber: Fiber
@@ -100,6 +110,7 @@ class Client:
         c"""
         uv_tcp_init(uv_default_loop(), &m_socket);
         m_socket.data = this;
+        m_shutdown.data = this;
         """
 
         self._fiber = None
@@ -107,6 +118,11 @@ class Client:
     def _ensure_one_caller(self):
         if self._fiber is not None:
             raise TcpError("Only one fiber may perform blocking operations.")
+
+    def _wait_for_completion(self):
+        self._fiber = current()
+        suspend()
+        self._fiber = None
 
     def connect(self, host: string, port: u32):
         """Connect to a server using given `host` and `port`.
@@ -119,7 +135,6 @@ class Client:
         host_utf8 += 0
         port_utf8 = str(port).to_utf8()
         port_utf8 += 0
-        self._fiber = current()
 
         c"""
         m_resolver.data = this;
@@ -137,8 +152,7 @@ class Client:
                        &m_hints);
         """
 
-        suspend()
-        self._fiber = None
+        self._wait_for_completion()
 
         if self._status != 0:
             raise TcpError("Connect failed.")
@@ -148,7 +162,13 @@ class Client:
 
         """
 
-        raise NotImplementedError()
+        self._ensure_one_caller()
+
+        c"""
+        uv_shutdown(&m_shutdown, (uv_stream_t *)&m_socket, on_shutdown_complete);
+        """
+
+        self._wait_for_completion()
 
     def write(self, data: bytes):
         """Write data to the server.
@@ -180,12 +200,10 @@ class Client:
 
         c"""
         _read_data = Bytes(size);
-        uv_read_start((uv_stream_t*)&m_socket, read_alloc, on_read_complete);
+        uv_read_start((uv_stream_t *)&m_socket, read_alloc, on_read_complete);
         """
 
-        self._fiber = current()
-        suspend()
-        self._fiber = None
+        self._wait_for_completion()
 
         data = self._read_data
         self._read_data = None
@@ -201,6 +219,7 @@ class _ServerCommunicationFiber(Fiber):
         assert client.read(9) == b"234567890"
         client.write(b"0")
         client.write(b"987654321")
+        assert client.read(1) == b""
 
 @test
 def test_server_communication():
@@ -217,3 +236,6 @@ def test_server_communication():
     client.write(b"0")
     assert client.read(9) == b"098765432"
     assert client.read(1) == b"1"
+
+    client.disconnect()
+    server_fiber.join()
