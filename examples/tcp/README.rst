@@ -7,7 +7,7 @@ and echos any received data.
 .. code-block:: text
 
    $ mys run server
-   Accepting clients on localhost:59000.
+   Accepting clients on port 59000.
    Client accepted.
    Echoing data.
    Echoing data.

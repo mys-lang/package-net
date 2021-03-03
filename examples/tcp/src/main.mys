@@ -8,7 +8,7 @@ PORT: u32 = 59000
 def do_server():
     server = Server()
     server.listen(PORT)
-    print(f"Accepting clients on {ADDRESS}:{PORT}.")
+    print(f"Accepting clients on port {PORT}.")
 
     while True:
         client = server.accept()
