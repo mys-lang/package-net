@@ -36,10 +36,6 @@ static void on_read_complete(uv_stream_t *request_p,
         return;
     }
 
-    memcpy(client_p->m_read_data.m_bytes->data() + client_p->m_read_offset,
-           buf_p->base,
-           nread);
-    free(buf_p->base);
     client_p->m_read_offset += nread;
 
     if (client_p->m_read_offset == client_p->m_read_data.m_bytes->size()) {
@@ -50,8 +46,11 @@ static void on_read_complete(uv_stream_t *request_p,
 
 static void read_alloc(uv_handle_t *handle_p, size_t size, uv_buf_t *buf_p)
 {
-    buf_p->base = (char *)malloc(size);
-    buf_p->len = size;
+    Client *client_p = (Client *)(handle_p->data);
+
+    buf_p->base = ((char *)client_p->m_read_data.m_bytes->data()
+                   + client_p->m_read_offset);
+    buf_p->len = client_p->m_read_data.m_bytes->size() - client_p->m_read_offset;
 }
 
 static void on_write_complete(uv_write_t *request_p, int status)
