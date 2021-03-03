@@ -15,7 +15,7 @@ TCP client
 
    from net.tcp.client import Client
 
-   def main()
+   def main():
        client = Client()
        client.connect("localhost", 5858)
        print("Connected!")
