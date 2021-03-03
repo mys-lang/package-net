@@ -2,16 +2,15 @@ from fiber import Fiber
 from fiber import suspend
 from fiber import current
 
+class TcpError(Error):
+    message: string
+
 c"""
 static void on_connect_complete(uv_connect_t *request_p, int status)
 {
     Client *client_p = (Client *)(request_p->data);
 
-    if (status == -1) {
-        fprintf(stderr, "error on_connect_complete");
-        return;
-    }
-
+    client_p->_connect_status = status;
     resume(client_p->_fiber);
 }
 
@@ -90,6 +89,7 @@ class Client:
     c"Bytes m_read_data;"
     c"u32 m_read_offset;"
     _fiber: Fiber
+    _connect_status: i32
 
     def __init__(self):
         c"""
@@ -122,6 +122,9 @@ class Client:
 
         suspend()
         self._fiber = None
+
+        if self._connect_status != 0:
+            raise TcpError("Connect failed.")
 
     def disconnect(self):
         pass
