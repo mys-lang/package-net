@@ -35,7 +35,7 @@ static void on_read_complete(uv_stream_t *request_p,
         }
     } else if (nread < 0) {
         completed = true;
-        client_p->_read_data.m_bytes->resize(0);
+        client_p->_read_data.m_bytes = nullptr;
     }
 
     if (completed) {
@@ -190,7 +190,7 @@ class Client:
 
     def read(self, size: u32) -> bytes:
         """Read data from the server. Always returns exactly given number of
-        bytes, or no data if disconnected.
+        bytes, or None if disconnected.
 
         """
 
@@ -219,7 +219,7 @@ class _ServerCommunicationFiber(Fiber):
         assert client.read(9) == b"234567890"
         client.write(b"0")
         client.write(b"987654321")
-        assert client.read(1) == b""
+        assert client.read(1) is None
 
 @test
 def test_server_communication():
