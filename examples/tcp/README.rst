@@ -9,9 +9,9 @@ and echos any received data.
    $ mys run server
    Accepting clients on port 59000.
    Client accepted.
-   Echoing data.
-   Echoing data.
-   Echoing data.
+   Echoing byte.
+   Echoing byte.
+   Echoing byte.
    Disconnected.
 
 Start a TCP client in another terminal. It connects to the server and
