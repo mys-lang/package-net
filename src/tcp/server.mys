@@ -79,11 +79,18 @@ static void on_write_complete(uv_write_t *request_p, int status)
     delete write_request_p;
 }
 
+static void on_close_complete(uv_handle_t *handle_p)
+{
+    Client *client_p = (Client *)(handle_p->data);
+
+    resume(client_p->_fiber);
+}
+
 static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
 {
     Client *client_p = (Client *)(request_p->data);
 
-    resume(client_p->_fiber);
+    uv_close((uv_handle_t*)&client_p->m_socket, on_close_complete);
 }
 """
 
@@ -96,14 +103,20 @@ class Client:
     _read_data: bytes
     _read_offset: u32
     _fiber: Fiber
+    _connected: bool
 
     def __init__(self):
         c"""
         uv_tcp_init(uv_default_loop(), &m_socket);
         m_socket.data = this;
+        m_shutdown.data = this;
         """
 
         self._fiber = None
+        self._connected = True
+
+    def __del__(self):
+        self.disconnect()
 
     def _ensure_one_caller(self):
         if self._fiber is not None:
@@ -119,6 +132,9 @@ class Client:
 
         """
 
+        if not self._connected:
+            return
+
         self._ensure_one_caller()
 
         c"""
@@ -126,6 +142,7 @@ class Client:
         """
 
         self._wait_for_completion()
+        self._connected = False
 
     def write(self, data: bytes):
         """Write given data to the server.

@@ -84,11 +84,18 @@ static void on_getaddrinfo_complete(uv_getaddrinfo_t *resolver_p,
     uv_freeaddrinfo(info_p);
 }
 
+static void on_close_complete(uv_handle_t *handle_p)
+{
+    Client *client_p = (Client *)(handle_p->data);
+
+    resume(client_p->_fiber);
+}
+
 static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
 {
     Client *client_p = (Client *)(request_p->data);
 
-    resume(client_p->_fiber);
+    uv_close((uv_handle_t*)&client_p->m_socket, on_close_complete);
 }
 """
 
@@ -105,6 +112,7 @@ class Client:
     _read_offset: u32
     _fiber: Fiber
     _status: i32
+    _connected: bool
 
     def __init__(self):
         c"""
@@ -114,6 +122,10 @@ class Client:
         """
 
         self._fiber = None
+        self._connected = False
+
+    def __del__(self):
+        self.disconnect()
 
     def _ensure_one_caller(self):
         if self._fiber is not None:
@@ -128,6 +140,9 @@ class Client:
         """Connect to a server using given `host` and `port`.
 
         """
+
+        if self._connected:
+            raise TcpError("Already connected.")
 
         self._ensure_one_caller()
 
@@ -157,10 +172,15 @@ class Client:
         if self._status != 0:
             raise TcpError("Connect failed.")
 
+        self._connected = True
+
     def disconnect(self):
         """Disconnect from the server.
 
         """
+
+        if not self._connected:
+            return
 
         self._ensure_one_caller()
 
@@ -169,6 +189,7 @@ class Client:
         """
 
         self._wait_for_completion()
+        self._connected = False
 
     def write(self, data: bytes):
         """Write data to the server.

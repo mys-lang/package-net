@@ -19,6 +19,7 @@ def do_server():
 
             if data is None:
                 print("Disconnected.")
+                client.disconnect()
                 break
 
             print("Echoing byte.")
