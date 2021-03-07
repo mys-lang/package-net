@@ -10,6 +10,7 @@ public:
     uv_buf_t m_buf;
     uv_write_t m_request;
     Bytes m_data;
+    Client *m_client;
 };
 
 static void on_connect_complete(uv_connect_t *request_p, int status)
@@ -36,6 +37,7 @@ static void on_read_complete(uv_stream_t *request_p,
     } else if (nread < 0) {
         completed = true;
         client_p->_read_data.m_bytes = nullptr;
+        client_p->_connected = false;
     }
 
     if (completed) {
@@ -58,8 +60,7 @@ static void on_write_complete(uv_write_t *request_p, int status)
     WriteRequest *write_request_p = (WriteRequest *)(request_p->data);
 
     if (status != 0) {
-        std::cout << "ToDo: TCP write failed." << std::endl;
-        exit(1);
+        write_request_p->m_client->_connected = false;
     }
 
     delete write_request_p;
@@ -136,6 +137,13 @@ class Client:
         suspend()
         self._fiber = None
 
+    def is_connected(self) -> bool:
+        """Returns true if conencted to the server, false otherwise.
+
+        """
+
+        return self._connected
+
     def connect(self, host: string, port: u32):
         """Connect to a server using given `host` and `port`.
 
@@ -202,6 +210,7 @@ class Client:
                                        data.m_bytes->size());
         request_p->m_request.data = request_p;
         request_p->m_data = data;
+        request_p->m_client = this;
         uv_write(&request_p->m_request,
                  (uv_stream_s *)&m_socket,
                  &request_p->m_buf,
@@ -236,11 +245,13 @@ class _ServerCommunicationFiber(Fiber):
 
     def run(self):
         client = self.server.accept()
+        assert client.is_connected()
         assert client.read(1) == b"1"
         assert client.read(9) == b"234567890"
         client.write(b"0")
         client.write(b"987654321")
         assert client.read(1) is None
+        assert not client.is_connected()
 
 @test
 def test_server_communication():
@@ -252,11 +263,29 @@ def test_server_communication():
     server_fiber.start()
 
     client = Client()
+    assert not client.is_connected()
     client.connect("localhost", port)
+    assert client.is_connected()
     client.write(b"123456789")
     client.write(b"0")
     assert client.read(9) == b"098765432"
     assert client.read(1) == b"1"
 
     client.disconnect()
+    assert not client.is_connected()
     server_fiber.join()
+
+@test
+def test_connection_refused():
+    port: u32 = 50223
+
+    client = Client()
+
+    try:
+        message = ""
+        client.connect("localhost", port)
+    except TcpError as e:
+        message = e.message
+
+    assert message == "Connect failed."
+    assert not client.is_connected()

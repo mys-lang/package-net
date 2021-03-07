@@ -9,6 +9,7 @@ public:
     uv_buf_t m_buf;
     uv_write_t m_request;
     Bytes m_data;
+    Client *m_client;
 };
 
 static void on_client_connected(uv_stream_t *socket_p, int status)
@@ -50,6 +51,7 @@ static void on_read_complete(uv_stream_t *request_p,
     } else if (nread < 0) {
         completed = true;
         client_p->_read_data.m_bytes = nullptr;
+        client_p->_connected = false;
     }
 
     if (completed) {
@@ -72,8 +74,7 @@ static void on_write_complete(uv_write_t *request_p, int status)
     WriteRequest *write_request_p = (WriteRequest *)(request_p->data);
 
     if (status != 0) {
-        std::cout << "ToDo: TCP write failed." << std::endl;
-        exit(1);
+        write_request_p->m_client->_connected = false;
     }
 
     delete write_request_p;
@@ -127,6 +128,13 @@ class Client:
         suspend()
         self._fiber = None
 
+    def is_connected(self) -> bool:
+        """Returns true if conencted to the server, false otherwise.
+
+        """
+
+        return self._connected
+
     def disconnect(self):
         """Disconnect from the server.
 
@@ -155,6 +163,7 @@ class Client:
                                        data.m_bytes->size());
         request_p->m_request.data = request_p;
         request_p->m_data = data;
+        request_p->m_client = this;
         uv_write(&request_p->m_request,
                  (uv_stream_s *)&m_socket,
                  &request_p->m_buf,
