@@ -57,6 +57,10 @@ class Socket:
         raise NotImplementedError()
 
     def send_to(self, data: bytes, host: string, port: u32):
+        """Send given data to given address.
+
+        """
+
         host_utf8 = host.to_utf8()
         host_utf8 += 0
 
