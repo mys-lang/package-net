@@ -1,23 +1,23 @@
 from argparse import Parser
 from net.udp import Socket
 
-ADDRESS: string = "127.0.0.1"
+ADDRESS: string = "localhost"
 PORT: u32 = 59001
 
 def do_server():
     server = Socket()
-    server.bind(ADDRESS, PORT)
+    server.bind(PORT)
 
     while True:
-        data, peer = server.receive_from()
-        server.send_to(data, peer)
+        data, host, port = server.receive_from()
+        server.send_to(data, host, port)
 
 def do_client():
     client = Socket()
-    client.bind(ADDRESS, PORT + 1)
-    client.connect(ADDRESS, PORT)
-    client.send(b"Hello!")
-    print(client.receive())
+    #client.bind(PORT + 1)
+    #client.connect(ADDRESS, PORT)
+    client.send_to(b"Hello!", "127.0.0.1", PORT)
+    #print(client.receive())
 
 def main(argv: [string]):
     parser = Parser("udp")

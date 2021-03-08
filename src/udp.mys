@@ -1,25 +1,81 @@
-class Address:
-    pass
+from fiber import Fiber
+from fiber import current
+from fiber import suspend
+
+c"""
+static void on_send_complete(uv_udp_send_t *request_p, int status)
+{
+    Socket *socket_p = (Socket *)(request_p->data);
+
+    if (status == -1) {
+        fprintf(stderr, "Send error!\n");
+    }
+
+    resume(socket_p->_fiber);
+}
+"""
 
 class Socket:
+    c"""
+    uv_udp_t m_socket;
+    uv_udp_send_t m_send;
+    uv_buf_t m_buf;
+    """
+    _fiber: Fiber
 
-    def bind(self, host: string, port: u32):
-        pass
+    def __init__(self):
+        c"""
+        uv_udp_init(uv_default_loop(), &m_socket);
+        m_socket.data = this;
+        m_send.data = this;
+        """
+
+        self._fiber = None
+
+    def _wait_for_completion(self):
+        self._fiber = current()
+        suspend()
+        self._fiber = None
+
+    def bind(self, port: u32):
+        """Bind the socket to given local port. Used both when sending and
+        receiving packtes.
+
+        """
+
+        raise NotImplementedError()
 
     def connect(self, host: string, port: u32):
-        pass
+        """Connect the socket to given remote host and port. Sent packages are
+        sent to this address by default.
 
-    def disconnect(self):
-        pass
+        """
+
+        raise NotImplementedError()
 
     def send(self, data: bytes):
-        pass
+        raise NotImplementedError()
 
-    def send_to(self, data: bytes, address: Address):
-        pass
+    def send_to(self, data: bytes, host: string, port: u32):
+        host_utf8 = host.to_utf8()
+        host_utf8 += 0
+
+        c"""
+        struct sockaddr_in addr;
+        uv_ip4_addr((const char *)host_utf8.m_bytes->data(), port, &addr);
+        m_buf = uv_buf_init((char *)data.m_bytes->data(), data.m_bytes->size());
+        uv_udp_send(&m_send,
+                    &m_socket,
+                    &m_buf,
+                    1,
+                    (const struct sockaddr *)&addr,
+                    on_send_complete);
+        """
+
+        self._wait_for_completion()
 
     def receive(self) -> bytes:
-        return None
+        raise NotImplementedError()
 
-    def receive_from(self) -> (bytes, Address):
-        return (b"", Address())
+    def receive_from(self) -> (bytes, string, u32):
+        raise NotImplementedError()
