@@ -8,7 +8,6 @@ class SecureError(Error):
 c"""
 static int bio_write(BIO *bio_p, const char *data_p, int dlen)
 {
-    std::cout << "bio_write(dlen=" << dlen << ")" << std::endl;
     Connection *connection_p = (Connection *)BIO_get_data(bio_p);
     auto data = Bytes(dlen);
 
@@ -23,7 +22,6 @@ static int bio_write(BIO *bio_p, const char *data_p, int dlen)
 
 static int bio_read(BIO *bio_p, char *data_p, int dlen)
 {
-    std::cout << "bio_read(dlen=" << dlen << ")" << std::endl;
     Connection *connection_p = (Connection *)BIO_get_data(bio_p);
 
     auto data = connection_p->_io_handler->read(dlen);
@@ -38,8 +36,6 @@ static int bio_read(BIO *bio_p, char *data_p, int dlen)
 static long bio_ctrl(BIO *b, int cmd, long larg, void *pargs)
 {
     long res = 0;
-
-    std::cout << "bio_ctrl(cmd=" << cmd << ")" << std::endl;
 
     switch(cmd)
     {
