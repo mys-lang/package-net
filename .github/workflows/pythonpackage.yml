@@ -20,4 +20,6 @@ jobs:
     - name: Test
       run: |
         mys test
+    - name: Examples
+      run: |
         mys -C examples/tcp build
