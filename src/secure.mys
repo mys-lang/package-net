@@ -6,18 +6,55 @@ class SecureError(Error):
     message: string
 
 c"""
-static int bio_write(BIO *bio_p, const char *data, int dlen)
+static int bio_write(BIO *bio_p, const char *data_p, int dlen)
 {
     std::cout << "bio_write(dlen=" << dlen << ")" << std::endl;
+    Connection *connection_p = (Connection *)BIO_get_data(bio_p);
+    auto data = Bytes(dlen);
 
-    return -1;
+    for (int i = 0; i < dlen; i++) {
+        data[i] = data_p[i];
+    }
+
+    connection_p->_io_handler->write(data);
+
+    return dlen;
 }
 
-static int bio_read(BIO *bio_p, char *data, int dlen)
+static int bio_read(BIO *bio_p, char *data_p, int dlen)
 {
     std::cout << "bio_read(dlen=" << dlen << ")" << std::endl;
+    Connection *connection_p = (Connection *)BIO_get_data(bio_p);
 
-    return -1;
+    auto data = connection_p->_io_handler->read(dlen);
+
+    for (int i = 0; i < dlen; i++) {
+        data_p[i] = data[i];
+    }
+
+    return dlen;
+}
+
+static long bio_ctrl(BIO *b, int cmd, long larg, void *pargs)
+{
+    long res = 0;
+
+    std::cout << "bio_ctrl(cmd=" << cmd << ")" << std::endl;
+
+    switch(cmd)
+    {
+        case BIO_CTRL_FLUSH: // 11
+            res = 1;
+            break;
+        case BIO_CTRL_PUSH: // 6
+        case BIO_CTRL_POP: // 7
+            res = 0;
+            break;
+        default:
+            break;
+    }
+
+    return res;
 }
 
 static BIO_METHOD *create_bio(void)
@@ -27,6 +64,7 @@ static BIO_METHOD *create_bio(void)
 
     BIO_meth_set_write(bio_p, bio_write);
     BIO_meth_set_read(bio_p, bio_read);
+    BIO_meth_set_ctrl(bio_p, bio_ctrl);
 
     return bio_p;
 }
@@ -59,7 +97,12 @@ class Context:
 
 @trait
 class IOHandler:
-    pass
+
+    def write(self, data: bytes):
+        pass
+
+    def read(self, size: u32) -> bytes:
+        pass
 
 class Connection:
     _context: Context
@@ -117,7 +160,9 @@ class Connection:
 
         """
 
-        raise NotImplementedError()
+        c"""
+        SSL_write(m_ssl, data.m_bytes->data(), data.m_bytes->size());
+        """
 
     def read(self, size: u32) -> bytes:
         """Read data from the server. Always returns exactly given number of
@@ -125,4 +170,10 @@ class Connection:
 
         """
 
-        raise NotImplementedError()
+        data = bytes(size)
+
+        c"""
+        SSL_read(m_ssl, data.m_bytes->data(), data.m_bytes->size());
+        """
+
+        return data
