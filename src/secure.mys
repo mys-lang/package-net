@@ -1,0 +1,50 @@
+class Context:
+    pass
+
+@trait
+class IOHandler:
+    pass
+
+class Connection:
+    _context: Context
+    _io_handler: IOHandler
+
+    def __init__(self, context: Context, io_handler: IOHandler):
+        self._context = context
+        self._io_handler = io_handler
+
+    def is_connected(self) -> bool:
+        """Returns true if conencted to the server, false otherwise.
+
+        """
+
+        raise NotImplementedError()
+
+    def connect(self):
+        """Connect to a server using given `host` and `port`.
+
+        """
+
+        raise NotImplementedError()
+
+    def disconnect(self):
+        """Disconnect from the server.
+
+        """
+
+        raise NotImplementedError()
+
+    def write(self, data: bytes):
+        """Write data to the server.
+
+        """
+
+        raise NotImplementedError()
+
+    def read(self, size: u32) -> bytes:
+        """Read data from the server. Always returns exactly given number of
+        bytes, or None if disconnected.
+
+        """
+
+        raise NotImplementedError()

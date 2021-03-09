@@ -1,0 +1,2 @@
+class StcpError(Error):
+    message: string

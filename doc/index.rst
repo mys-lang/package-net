@@ -59,4 +59,11 @@ UDP socket
 
 .. mysfile:: src/udp.mys
 
+Secure TCP client
+-----------------
+
+.. warning:: Not yet implemented!
+
+.. mysfile:: src/stcp/client.mys
+
 .. _Mys programming language: https://mys.readthedocs.io/en/latest/
