@@ -1,5 +1,75 @@
+c"""header-before-namespace
+#include <openssl/ssl.h>
+"""
+
+class SecureError(Error):
+    message: string
+
+c"""
+static int bio_write(BIO *bio_p, const char *data, int dlen)
+{
+    std::cout << "bio_write(dlen=" << dlen << ")" << std::endl;
+
+    return -1;
+}
+
+static int bio_read(BIO *bio_p, char *data, int dlen)
+{
+    std::cout << "bio_read(dlen=" << dlen << ")" << std::endl;
+
+    return -1;
+}
+
+static int bio_create(BIO *bio_p)
+{
+    std::cout << "bio_create()" << std::endl;
+
+    return 1;
+}
+
+static int bio_destroy(BIO *bio_p)
+{
+    std::cout << "bio_destroy()" << std::endl;
+
+    return 1;
+}
+
+static BIO_METHOD *create_bio(void)
+{
+    BIO_METHOD *bio_p = BIO_meth_new(BIO_get_new_index() | BIO_TYPE_SOURCE_SINK,
+                                     "mys_bio");
+
+    BIO_meth_set_write(bio_p, bio_write);
+    BIO_meth_set_read(bio_p, bio_read);
+    BIO_meth_set_create(bio_p, bio_create);
+    BIO_meth_set_destroy(bio_p, bio_destroy);
+
+    return bio_p;
+}
+"""
+
+class _Module:
+
+    def __init__(self):
+        c"""
+        SSL_load_error_strings();
+        SSL_library_init();
+        """
+
+_MODULE: _Module = _Module()
+
 class Context:
-    pass
+    c"SSL_CTX *m_context;"
+
+    def __init__(self):
+        c"""
+        m_context = SSL_CTX_new(SSLv23_client_method());
+
+        if (m_context == NULL) {
+            std::cout << "SSL_CTX_new() failed" << std::endl;
+            exit(1);
+        }
+        """
 
 @trait
 class IOHandler:
@@ -8,24 +78,46 @@ class IOHandler:
 class Connection:
     _context: Context
     _io_handler: IOHandler
+    _connected: bool
+    c"SSL *m_ssl;"
 
     def __init__(self, context: Context, io_handler: IOHandler):
         self._context = context
         self._io_handler = io_handler
+        self._connected = False
+
+        c"""
+        m_ssl = SSL_new(context->m_context);
+
+        if (m_ssl == NULL) {
+            std::cout << "SSL_new() failed" << std::endl;
+            exit(1);
+        }
+
+        BIO *bio_p = BIO_new(create_bio());
+        BIO_set_data(bio_p, this);
+        BIO_set_init(bio_p, 1);
+        SSL_set_bio(m_ssl, bio_p, bio_p);
+        """
 
     def is_connected(self) -> bool:
         """Returns true if conencted to the server, false otherwise.
 
         """
 
-        raise NotImplementedError()
+        return self._connected
 
     def connect(self):
         """Connect to a server using given `host` and `port`.
 
         """
 
-        raise NotImplementedError()
+        res: i32 = 0
+
+        c"res = SSL_connect(m_ssl);"
+
+        if res != 1:
+            raise SecureError("Connect failed.")
 
     def disconnect(self):
         """Disconnect from the server.

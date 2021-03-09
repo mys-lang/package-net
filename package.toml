@@ -3,3 +3,6 @@ name = "net"
 version = "0.7.0"
 authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
 description = "Networking."
+
+[c-dependencies]
+openssl = "*"

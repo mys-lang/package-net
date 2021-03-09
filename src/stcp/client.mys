@@ -1,7 +1,10 @@
+from fiber import Fiber
 from ..secure import Connection as SecureConnection
 from ..secure import Context as SecureContext
 from ..secure import IOHandler
+from ..secure import SecureError
 from ..tcp.client import Client as TcpClient
+from ..tcp.server import Server as TcpServer
 
 class _IOHandler(IOHandler):
     _tcp_client: TcpClient
@@ -23,13 +26,13 @@ class Client:
     _tcp_client: TcpClient
     _secure_connection: SecureConnection
 
-    def __init__(self, context: SecureContext = None):
+    def __init__(self, context: SecureContext = SecureContext()):
         self._tcp_client = TcpClient()
         self._secure_connection = SecureConnection(context,
                                                    _IOHandler(self._tcp_client))
 
     def __del__(self):
-        self.disconnect()
+        pass
 
     def is_connected(self) -> bool:
         """Returns true if conencted to the server, false otherwise.
@@ -43,7 +46,6 @@ class Client:
 
         """
 
-        self._tcp_client.connect(host, port)
         self._secure_connection.connect()
 
     def disconnect(self):
@@ -52,7 +54,6 @@ class Client:
         """
 
         self._secure_connection.disconnect()
-        self._tcp_client.disconnect()
 
     def write(self, data: bytes):
         """Write data to the server.
@@ -68,3 +69,41 @@ class Client:
         """
 
         return self._secure_connection.read(size)
+
+class _ServerCommunicationFiber(Fiber):
+    server: TcpServer
+
+    def run(self):
+        client = self.server.accept()
+        assert client.is_connected()
+        assert client.read(1) == b"1"
+        assert client.read(9) == b"234567890"
+        client.write(b"0")
+        client.write(b"987654321")
+        assert client.read(1) is None
+        assert not client.is_connected()
+
+@test
+def test_server_communication():
+    port: u32 = 50232
+
+    server = TcpServer()
+    server.listen(port)
+    server_fiber = _ServerCommunicationFiber(server)
+    server_fiber.start()
+
+    client = Client()
+    assert not client.is_connected()
+    try:
+        client.connect("localhost", port)
+    except SecureError:
+        pass
+    # assert client.is_connected()
+    # client.write(b"123456789")
+    # client.write(b"0")
+    # assert client.read(9) == b"098765432"
+    # assert client.read(1) == b"1"
+    #
+    # client.disconnect()
+    # assert not client.is_connected()
+    # server_fiber.join()
