@@ -20,20 +20,6 @@ static int bio_read(BIO *bio_p, char *data, int dlen)
     return -1;
 }
 
-static int bio_create(BIO *bio_p)
-{
-    std::cout << "bio_create()" << std::endl;
-
-    return 1;
-}
-
-static int bio_destroy(BIO *bio_p)
-{
-    std::cout << "bio_destroy()" << std::endl;
-
-    return 1;
-}
-
 static BIO_METHOD *create_bio(void)
 {
     BIO_METHOD *bio_p = BIO_meth_new(BIO_get_new_index() | BIO_TYPE_SOURCE_SINK,
@@ -41,19 +27,19 @@ static BIO_METHOD *create_bio(void)
 
     BIO_meth_set_write(bio_p, bio_write);
     BIO_meth_set_read(bio_p, bio_read);
-    BIO_meth_set_create(bio_p, bio_create);
-    BIO_meth_set_destroy(bio_p, bio_destroy);
 
     return bio_p;
 }
 """
 
 class _Module:
+    c"BIO_METHOD *m_bio_method;"
 
     def __init__(self):
         c"""
         SSL_load_error_strings();
         SSL_library_init();
+        m_bio_method = create_bio();
         """
 
 _MODULE: _Module = _Module()
@@ -94,7 +80,7 @@ class Connection:
             exit(1);
         }
 
-        BIO *bio_p = BIO_new(create_bio());
+        BIO *bio_p = BIO_new(_MODULE->m_bio_method);
         BIO_set_data(bio_p, this);
         BIO_set_init(bio_p, 1);
         SSL_set_bio(m_ssl, bio_p, bio_p);
