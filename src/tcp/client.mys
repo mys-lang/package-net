@@ -36,7 +36,7 @@ static void on_read_complete(uv_stream_t *request_p,
         }
     } else if (nread < 0) {
         completed = true;
-        client_p->_read_data.m_bytes = nullptr;
+        client_p->_read_data.m_bytes->resize(client_p->_read_offset);
         client_p->_connected = false;
     }
 
@@ -200,7 +200,7 @@ class Client:
         self._connected = False
 
     def write(self, data: bytes):
-        """Write data to the server.
+        """Write data to the server. Never blocks.
 
         """
 
@@ -219,8 +219,9 @@ class Client:
         """
 
     def read(self, size: u32) -> bytes:
-        """Read data from the server. Always returns exactly given number of
-        bytes, or None if disconnected.
+        """Read data from the server. Always returns size number of bytes,
+        unless the connection was closed, in which case the remaining
+        data is returned.
 
         """
 
@@ -250,7 +251,7 @@ class _ServerCommunicationFiber(Fiber):
         assert client.read(9) == b"234567890"
         client.write(b"0")
         client.write(b"987654321")
-        assert client.read(1) is None
+        assert client.read(1) == b""
         assert not client.is_connected()
 
 @test
@@ -289,3 +290,28 @@ def test_connection_refused():
 
     assert message == "Connect failed."
     assert not client.is_connected()
+
+class _ClientReadCloseFiber(Fiber):
+    server: Server
+
+    def run(self):
+        client = self.server.accept()
+        assert client.is_connected()
+        client.write(b"1234567890")
+        client.disconnect()
+
+@test
+def test_client_read_close():
+    port: u32 = 50224
+
+    server = Server()
+    server.listen(port)
+    server_fiber = _ClientReadCloseFiber(server)
+    server_fiber.start()
+
+    client = Client()
+    client.connect("localhost", port)
+    assert client.read(20) == b"1234567890"
+    assert client.read(1) == b""
+    client.disconnect()
+    server_fiber.join()

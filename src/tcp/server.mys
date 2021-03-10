@@ -50,7 +50,7 @@ static void on_read_complete(uv_stream_t *request_p,
         }
     } else if (nread < 0) {
         completed = true;
-        client_p->_read_data.m_bytes = nullptr;
+        client_p->_read_data.m_bytes->resize(client_p->_read_offset);
         client_p->_connected = false;
     }
 
@@ -153,7 +153,7 @@ class Client:
         self._connected = False
 
     def write(self, data: bytes):
-        """Write given data to the server.
+        """Write given data to the server. Never blocks.
 
         """
 
@@ -172,8 +172,9 @@ class Client:
         """
 
     def read(self, size: u32) -> bytes:
-        """Read data from the server. Always returns exactly given number of
-        bytes, or None if disconnected.
+        """Read data from the server. Always returns size number of bytes,
+        unless the connection was closed, in which case the remaining
+        data is returned.
 
         """
 

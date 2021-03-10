@@ -25,6 +25,7 @@ static int bio_read(BIO *bio_p, char *data_p, int dlen)
     Connection *connection_p = (Connection *)BIO_get_data(bio_p);
 
     auto data = connection_p->_io_handler->read(dlen);
+    dlen = data.m_bytes->size();
 
     for (int i = 0; i < dlen; i++) {
         data_p[i] = data[i];
