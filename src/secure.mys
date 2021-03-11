@@ -2,6 +2,10 @@ c"""header-before-namespace
 #include <openssl/ssl.h>
 """
 
+c"""source-before-namespace
+#include <openssl/err.h>
+"""
+
 class SecureError(Error):
     message: string
 
@@ -138,12 +142,18 @@ class Connection:
 
         """
 
-        res: i32 = 0
+        message: string = None
 
-        c"res = SSL_connect(m_ssl);"
+        c"""
+        int res = SSL_connect(m_ssl);
 
-        if res != 1:
-            raise SecureError("Connect failed.")
+        if (res != 1) {
+            message = String(ERR_error_string(ERR_get_error(), NULL));
+        }
+        """
+
+        if message is not None:
+            raise SecureError(f"Connect failed with '{message}'.")
 
     def disconnect(self):
         """Disconnect from the server.
