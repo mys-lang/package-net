@@ -1,6 +1,8 @@
 from fiber import Fiber
+from fiber import sleep
 from fiber import current
 from fiber import suspend
+from fiber import CancelledError
 from .errors import TcpError
 from .server import Server
 
@@ -117,7 +119,6 @@ class Client:
 
     def __init__(self):
         c"""
-        uv_tcp_init(uv_default_loop(), &m_socket);
         m_socket.data = this;
         m_shutdown.data = this;
         """
@@ -160,6 +161,7 @@ class Client:
         port_utf8 += 0
 
         c"""
+        uv_tcp_init(uv_default_loop(), &m_socket);
         m_resolver.data = this;
 
         m_hints.ai_family = PF_INET;
@@ -314,4 +316,34 @@ def test_client_read_close():
     assert client.read(20) == b"1234567890"
     assert client.read(1) == b""
     client.disconnect()
+    server_fiber.join()
+
+class _ClientReUseFiber(Fiber):
+    server: Server
+
+    def run(self):
+        for _ in range(10):
+            client = self.server.accept()
+            assert client.read(1) == b""
+            client.disconnect()
+            client.disconnect()
+            client.disconnect()
+
+@test
+def test_client_re_use_client():
+    port: u32 = 50225
+
+    server = Server()
+    server.listen(port)
+    server_fiber = _ClientReUseFiber(server)
+    server_fiber.start()
+
+    client = Client()
+
+    for i in range(10):
+        client.connect("localhost", port)
+        client.disconnect()
+        client.disconnect()
+        client.disconnect()
+
     server_fiber.join()

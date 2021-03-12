@@ -28,11 +28,18 @@ static int bio_read(BIO *bio_p, char *data_p, int dlen)
 {
     Connection *connection_p = (Connection *)BIO_get_data(bio_p);
 
-    auto data = connection_p->_io_handler->read(dlen);
-    dlen = data.m_bytes->size();
+    try {
+        auto data = connection_p->_io_handler->read(dlen);
+        dlen = data.m_bytes->size();
 
-    for (int i = 0; i < dlen; i++) {
-        data_p[i] = data[i];
+        for (int i = 0; i < dlen; i++) {
+            data_p[i] = data[i];
+        }
+
+        connection_p->m_error = nullptr;
+    } catch (const __Error& e) {
+        dlen = 0;
+        connection_p->m_error = e.m_error;
     }
 
     return dlen;
@@ -44,11 +51,11 @@ static long bio_ctrl(BIO *b, int cmd, long larg, void *pargs)
 
     switch(cmd)
     {
-        case BIO_CTRL_FLUSH: // 11
+        case BIO_CTRL_FLUSH:
             res = 1;
             break;
-        case BIO_CTRL_PUSH: // 6
-        case BIO_CTRL_POP: // 7
+        case BIO_CTRL_PUSH:
+        case BIO_CTRL_POP:
             res = 0;
             break;
         default:
@@ -109,6 +116,7 @@ class Connection:
     _context: Context
     _io_handler: IOHandler
     _connected: bool
+    c"std::shared_ptr<mys::Error> m_error;"
     c"SSL *m_ssl;"
 
     def __init__(self, context: Context, io_handler: IOHandler):
@@ -160,7 +168,7 @@ class Connection:
 
         """
 
-        raise NotImplementedError()
+        c"SSL_clear(m_ssl);"
 
     def write(self, data: bytes):
         """Write data to the server.
@@ -168,19 +176,34 @@ class Connection:
         """
 
         c"""
-        SSL_write(m_ssl, data.m_bytes->data(), data.m_bytes->size());
+        int res = SSL_write(m_ssl, data.m_bytes->data(), data.m_bytes->size());
+
+        if (res != data.m_bytes->size()) {
+            std::cout << "SSL_write(): " << res << " " << data.m_bytes->size() << std::endl;
+            exit(1);
+        }
         """
 
     def read(self, size: u32) -> bytes:
-        """Read data from the server. Always returns exactly given number of
-        bytes, or None if disconnected.
+        """Read data from the server. Always returns size number of bytes,
+        unless the connection was closed, in which case the remaining
+        data is returned.
 
         """
 
         data = bytes(size)
 
         c"""
-        SSL_read(m_ssl, data.m_bytes->data(), data.m_bytes->size());
+        int res = SSL_read(m_ssl, data.m_bytes->data(), data.m_bytes->size());
+
+        if (m_error) {
+            m_error->__throw();
+        } else if (res <= 0) {
+            data.m_bytes->resize(0);
+        } else if (res != size) {
+            std::cout << "res: " << res << ", size: " << size << std::endl;
+            exit(1);
+        }
         """
 
         return data
