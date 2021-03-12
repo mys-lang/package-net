@@ -1,3 +1,5 @@
+from . import NetError
+
 c"""header-before-namespace
 #include <openssl/ssl.h>
 """
@@ -5,9 +7,6 @@ c"""header-before-namespace
 c"""source-before-namespace
 #include <openssl/err.h>
 """
-
-class SecureError(Error):
-    message: string
 
 c"""
 static int bio_write(BIO *bio_p, const char *data_p, int dlen)
@@ -161,7 +160,7 @@ class Connection:
         """
 
         if message is not None:
-            raise SecureError(f"Connect failed with '{message}'.")
+            raise NetError(f"Connect failed with '{message}'.")
 
     def disconnect(self):
         """Disconnect from the server.

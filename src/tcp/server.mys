@@ -1,7 +1,7 @@
 from fiber import Fiber
 from fiber import current
 from fiber import suspend
-from .errors import TcpError
+from .. import NetError
 
 c"""
 class WriteRequest {
@@ -121,7 +121,7 @@ class Client:
 
     def _ensure_one_caller(self):
         if self._fiber is not None:
-            raise TcpError("Only one fiber may perform blocking operations.")
+            raise NetError("Only one fiber may perform blocking operations.")
 
     def _wait_for_completion(self):
         self._fiber = current()

@@ -1,0 +1,2 @@
+class NetError(Error):
+    message: string

@@ -3,7 +3,7 @@ from fiber import sleep
 from fiber import current
 from fiber import suspend
 from fiber import CancelledError
-from .errors import TcpError
+from .. import NetError
 from .server import Server
 
 c"""
@@ -131,7 +131,7 @@ class Client:
 
     def _ensure_one_caller(self):
         if self._fiber is not None:
-            raise TcpError("Only one fiber may perform blocking operations.")
+            raise NetError("Only one fiber may perform blocking operations.")
 
     def _wait_for_completion(self):
         self._fiber = current()
@@ -151,7 +151,7 @@ class Client:
         """
 
         if self._connected:
-            raise TcpError("Already connected.")
+            raise NetError("Already connected.")
 
         self._ensure_one_caller()
 
@@ -180,7 +180,7 @@ class Client:
         self._wait_for_completion()
 
         if self._status != 0:
-            raise TcpError("Connect failed.")
+            raise NetError("Connect failed.")
 
         self._connected = True
 
@@ -296,7 +296,7 @@ def test_connection_refused():
     try:
         message = ""
         client.connect("localhost", port)
-    except TcpError as e:
+    except NetError as e:
         message = e.message
 
     assert message == "Connect failed."
