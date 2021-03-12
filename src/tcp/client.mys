@@ -230,13 +230,22 @@ class Client:
         self._ensure_one_caller()
 
         self._read_offset = 0;
+        self._read_data = bytes(size)
 
         c"""
-        _read_data = Bytes(size);
         uv_read_start((uv_stream_t *)&m_socket, read_alloc, on_read_complete);
         """
 
-        self._wait_for_completion()
+        self._fiber = current()
+
+        try:
+            suspend()
+        except CancelledError:
+            c"uv_read_stop((uv_stream_t *)&m_socket);"
+            self._read_data = None
+            raise
+        finally:
+            self._fiber = None
 
         data = self._read_data
         self._read_data = None
@@ -347,3 +356,33 @@ def test_client_re_use_client():
         client.disconnect()
 
     server_fiber.join()
+
+class _ClientCancelFiber(Fiber):
+    port: u32
+
+    def run(self):
+        client = Client()
+        client.connect("localhost", self.port)
+        client.write(b"1")
+
+        try:
+            client.read(1)
+        except CancelledError:
+            client.write(b"2")
+            assert client.read(1) == b"3"
+
+@test
+def test_client_cancel():
+    port: u32 = 50226
+
+    client_fiber = _ClientCancelFiber(port)
+    client_fiber.start()
+
+    server = Server()
+    server.listen(port)
+    client = server.accept()
+    assert client.read(1) == b"1"
+    client_fiber.cancel()
+    assert client.read(1) == b"2"
+    client.write(b"3")
+    client_fiber.join()
