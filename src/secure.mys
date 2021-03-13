@@ -193,15 +193,21 @@ class Connection:
         data = bytes(size)
 
         c"""
-        int res = SSL_read(m_ssl, data.m_bytes->data(), data.m_bytes->size());
+        int pos = 0;
 
-        if (m_error) {
-            m_error->__throw();
-        } else if (res <= 0) {
-            data.m_bytes->resize(0);
-        } else if (res != size) {
-            std::cout << "res: " << res << ", size: " << size << std::endl;
-            exit(1);
+        while (pos < data.m_bytes->size()) {
+            int res = SSL_read(m_ssl,
+                               data.m_bytes->data() + pos,
+                               data.m_bytes->size() - pos);
+
+            if (m_error) {
+                m_error->__throw();
+            } else if (res <= 0) {
+                data.m_bytes->resize(0);
+                break;
+            }
+
+            pos += res;
         }
         """
 
