@@ -1,8 +1,8 @@
 from fiber import Fiber
+from .. import NetError
 from ..secure import Connection as SecureConnection
 from ..secure import Context as SecureContext
 from ..secure import IOHandler
-from .. import NetError
 from ..tcp.client import Client as TcpClient
 from ..tcp.server import Server as TcpServer
 

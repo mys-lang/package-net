@@ -1,8 +1,8 @@
-from fiber import Fiber
-from fiber import sleep
-from fiber import current
-from fiber import suspend
 from fiber import CancelledError
+from fiber import Fiber
+from fiber import current
+from fiber import sleep
+from fiber import suspend
 from .. import NetError
 from .server import Server
 
