@@ -31,6 +31,7 @@ static void on_client_connected(uv_stream_t *socket_p, int status)
 
         if (server_p->_fiber) {
             resume(server_p->_fiber);
+            server_p->_fiber = nullptr;
         }
     }
 }
@@ -181,9 +182,9 @@ class Client:
         self._ensure_one_caller()
 
         self._read_offset = 0;
+        self._read_data = bytes(size)
 
         c"""
-        _read_data = Bytes(size);
         uv_read_start((uv_stream_t*)&m_socket, read_alloc, on_read_complete);
         """
 
@@ -240,6 +241,5 @@ class Server:
         if len(self._accepted_clients) == 0:
             self._fiber = current()
             suspend()
-            self._fiber = None
 
         return self._accepted_clients.pop()
