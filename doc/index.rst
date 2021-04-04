@@ -68,7 +68,7 @@ Secure TCP client
 
 .. mysfile:: src/stcp/client.mys
 
-.. |test| image:: https://github.com/mys-lang/package-base64/actions/workflows/pythonpackage.yml/badge.svg
-.. _test: https://github.com/mys-lang/package-base64/actions/workflows/pythonpackage.yml
+.. |test| image:: https://github.com/mys-lang/package-net/actions/workflows/pythonpackage.yml/badge.svg
+.. _test: https://github.com/mys-lang/package-net/actions/workflows/pythonpackage.yml
 
 .. _Mys programming language: https://mys-lang.org
