@@ -1,3 +1,5 @@
+|test|_
+
 About
 =====
 
@@ -66,4 +68,7 @@ Secure TCP client
 
 .. mysfile:: src/stcp/client.mys
 
-.. _Mys programming language: https://mys.readthedocs.io/en/latest/
+.. |test| image:: https://github.com/mys-lang/package-base64/actions/workflows/pythonpackage.yml/badge.svg
+.. _test: https://github.com/mys-lang/package-base64/actions/workflows/pythonpackage.yml
+
+.. _Mys programming language: https://mys-lang.org
