@@ -24,7 +24,7 @@ static void on_client_connected(uv_stream_t *socket_p, int status)
         return;
     }
 
-    std::shared_ptr<Client> client = std::make_shared<Client>();
+    mys::shared_ptr<Client> client = mys::make_shared<Client>();
 
     if (uv_accept(socket_p, (uv_stream_t *)&client->m_socket) == 0) {
         server_p->_accepted_clients->append(client);

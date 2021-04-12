@@ -115,7 +115,7 @@ class Connection:
     _context: Context
     _io_handler: IOHandler
     _connected: bool
-    c"std::shared_ptr<mys::Error> m_error;"
+    c"mys::shared_ptr<mys::Error> m_error;"
     c"SSL *m_ssl;"
 
     def __init__(self, context: Context, io_handler: IOHandler):
