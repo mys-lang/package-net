@@ -46,7 +46,7 @@ static void on_read_complete(uv_stream_t *request_p,
     if (nread > 0) {
         client_p->_read_offset += nread;
 
-        if (client_p->_read_offset == client_p->_read_data.m_bytes->size()) {
+        if (client_p->_read_offset == client_p->_read_end) {
             completed = true;
         }
     } else if (nread < 0) {
@@ -68,6 +68,31 @@ static void read_alloc(uv_handle_t *handle_p, size_t size, uv_buf_t *buf_p)
     buf_p->base = ((char *)client_p->_read_data.m_bytes->data()
                    + client_p->_read_offset);
     buf_p->len = client_p->_read_data.m_bytes->size() - client_p->_read_offset;
+}
+
+static void on_try_read_into_complete(uv_stream_t *request_p,
+                                      ssize_t nread,
+                                      const uv_buf_t* buf_p)
+{
+    Client *client_p = (Client *)(request_p->data);
+
+    if (nread > 0) {
+        client_p->_read_offset += nread;
+    } else if (nread < 0) {
+        client_p->_connected = false;
+    }
+
+    uv_read_stop(request_p);
+    resume(client_p->_fiber);
+}
+
+static void try_read_into_alloc(uv_handle_t *handle_p, size_t size, uv_buf_t *buf_p)
+{
+    Client *client_p = (Client *)(handle_p->data);
+
+    buf_p->base = ((char *)client_p->_read_data.m_bytes->data()
+                   + client_p->_read_offset);
+    buf_p->len = client_p->_read_end - client_p->_read_offset;
 }
 
 static void on_write_complete(uv_write_t *request_p, int status)
@@ -104,6 +129,7 @@ class Client:
     """
     _read_data: bytes
     _read_offset: u32
+    _read_end: u32
     _fiber: Fiber
     _connected: bool
 
@@ -181,7 +207,8 @@ class Client:
 
         self._ensure_one_caller()
 
-        self._read_offset = 0;
+        self._read_offset = 0
+        self._read_end = size
         self._read_data = bytes(size)
 
         c"""
@@ -197,6 +224,35 @@ class Client:
         self._read_data = None
 
         return data
+
+    def try_read_into(self, data: bytes, offset: u32, size: u32) -> u32:
+        """Try to read data from the server into given buffer. Returns number
+        of read bytes, which is at least one and at most given size
+        bytes, unless the connection was closed, in which case the
+        remaining number of bytes is returned.
+
+        """
+
+        self._ensure_one_caller()
+
+        self._read_offset = offset
+        self._read_end = offset + size
+        self._read_data = data
+
+        c"""
+        if (uv_read_start((uv_stream_t*)&m_socket,
+                          try_read_into_alloc,
+                          on_try_read_into_complete) != 0) {
+            std::cout << "uv_read_start failed" << std::endl;
+            exit(1);
+        }
+        """
+
+        self._wait_for_completion()
+
+        self._read_data = None
+
+        return self._read_offset - offset
 
 class Server:
     """A TCP server, listening for clients to connect.
