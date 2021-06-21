@@ -108,7 +108,7 @@ class IOHandler:
     def write(self, data: bytes):
         pass
 
-    def read(self, size: u32) -> bytes:
+    def read(self, size: u64) -> bytes:
         pass
 
 class Connection:
@@ -183,7 +183,7 @@ class Connection:
         }
         """
 
-    def read(self, size: u32) -> bytes:
+    def read(self, size: u64) -> bytes:
         """Read data from the server. Always returns size number of bytes,
         unless the connection was closed, in which case the remaining
         data is returned.

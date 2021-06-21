@@ -15,7 +15,7 @@ class _IOHandler(IOHandler):
     def write(self, data: bytes):
         self._tcp_client.write(data)
 
-    def read(self, size: u32) -> bytes:
+    def read(self, size: u64) -> bytes:
         return self._tcp_client.read(size)
 
 class Client:
@@ -64,7 +64,7 @@ class Client:
 
         self._secure_connection.write(data)
 
-    def read(self, size: u32) -> bytes:
+    def read(self, size: u64) -> bytes:
         """Read data from the server. Always returns exactly given number of
         bytes, or None if disconnected.
 

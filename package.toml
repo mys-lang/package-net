@@ -1,8 +1,11 @@
 [package]
 name = "net"
-version = "0.19.0"
+version = "0.20.0"
 authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
 description = "Networking."
+
+[dependencies]
+io = "latest"
 
 [c-dependencies]
 openssl = "latest"

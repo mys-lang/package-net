@@ -5,6 +5,7 @@ from fiber import sleep
 from fiber import suspend
 from .. import NetError
 from .server import Server
+from io.reader import Reader
 
 c"""
 class WriteRequest {
@@ -102,7 +103,7 @@ static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
 }
 """
 
-class Client:
+class Client(Reader):
     c"""
     uv_tcp_t m_socket;
     uv_connect_t m_connect;
@@ -112,7 +113,7 @@ class Client:
     uv_shutdown_t m_shutdown;
     """
     _read_data: bytes
-    _read_offset: u32
+    _read_offset: u64
     _fiber: Fiber
     _status: i32
     _connected: bool
@@ -220,7 +221,7 @@ class Client:
                  on_write_complete);
         """
 
-    def read(self, size: u32) -> bytes:
+    def read(self, size: u64) -> bytes:
         """Read data from the server. Always returns size number of bytes,
         unless the connection was closed, in which case the remaining
         data is returned.
@@ -252,6 +253,25 @@ class Client:
 
         return data
 
+    def read_into(self, data: bytes, start: u64, size: u64) -> u64:
+        """Read given number of bytes into given buffer. Always returns size
+        number of bytes, unless the connection was closed, in which
+        case the remaining number of bytes is returned.
+
+        """
+
+        raise NotImplementedError()
+
+    def try_read_into(self, data: bytes, start: u64, size: u64) -> u64:
+        """Try to read given number of bytes into given buffer. Returns number
+        of read bytes, which is at least one and at most given size
+        bytes, unless the connection was closed, in which case the
+        remaining number of bytes is returned.
+
+        """
+
+        raise NotImplementedError()
+
 class _ServerCommunicationFiber(Fiber):
     server: Server
 
@@ -265,11 +285,11 @@ class _ServerCommunicationFiber(Fiber):
         client.write(b"987654321")
 
         data = bytes(10)
-        offset: u32 = 0
-        left = u32(len(data))
+        offset: u64 = 0
+        left = len(data)
 
         while left > 0:
-            size = client.try_read_into(data, offset, u32(left))
+            size = client.try_read_into(data, offset, left)
             assert size > 0
             offset += size
             left -= size

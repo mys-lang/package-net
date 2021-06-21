@@ -2,6 +2,7 @@ from fiber import Fiber
 from fiber import current
 from fiber import suspend
 from .. import NetError
+from io.reader import Reader
 
 c"""
 class WriteRequest {
@@ -121,15 +122,15 @@ static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
 }
 """
 
-class Client:
+class Client(Reader):
     c"""
     uv_tcp_t m_socket;
     uv_buf_t m_buf;
     uv_shutdown_t m_shutdown;
     """
     _read_data: bytes
-    _read_offset: u32
-    _read_end: u32
+    _read_offset: u64
+    _read_end: u64
     _fiber: Fiber
     _connected: bool
 
@@ -198,7 +199,7 @@ class Client:
                  on_write_complete);
         """
 
-    def read(self, size: u32) -> bytes:
+    def read(self, size: u64) -> bytes:
         """Read data from the server. Always returns size number of bytes,
         unless the connection was closed, in which case the remaining
         data is returned.
@@ -225,7 +226,16 @@ class Client:
 
         return data
 
-    def try_read_into(self, data: bytes, offset: u32, size: u32) -> u32:
+    def read_into(self, data: bytes, start: u64, size: u64) -> u64:
+        """Read given number of bytes into given buffer. Always returns size
+        number of bytes, unless the connection was closed, in which
+        case the remaining number of bytes is returned.
+
+        """
+
+        raise NotImplementedError()
+
+    def try_read_into(self, data: bytes, offset: u64, size: u64) -> u64:
         """Try to read data from the server into given buffer. Returns number
         of read bytes, which is at least one and at most given size
         bytes, unless the connection was closed, in which case the
