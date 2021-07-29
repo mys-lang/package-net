@@ -41,8 +41,8 @@ TCP server
        print(f"Got: {data}")
        client.write(data)
 
-Functions and types
-===================
+API
+===
 
 TCP client
 ----------
