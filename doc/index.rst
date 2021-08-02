@@ -1,4 +1,6 @@
+|discord|_
 |test|_
+|stars|_
 
 About
 =====
@@ -13,7 +15,7 @@ Examples
 TCP client
 ----------
 
-.. code-block:: python
+.. code-block:: mys
 
    from net.tcp.client import Client
 
@@ -28,7 +30,7 @@ TCP client
 TCP server
 ----------
 
-.. code-block:: python
+.. code-block:: mys
 
    from net.tcp.server import Server
 
@@ -68,7 +70,13 @@ Secure TCP client
 
 .. mysfile:: src/stcp/client.mys
 
+.. |discord| image:: https://img.shields.io/discord/777073391320170507?label=Discord&logo=discord&logoColor=white
+.. _discord: https://discord.gg/GFDN7JvWKS
+
 .. |test| image:: https://github.com/mys-lang/package-net/actions/workflows/pythonpackage.yml/badge.svg
 .. _test: https://github.com/mys-lang/package-net/actions/workflows/pythonpackage.yml
+
+.. |stars| image:: https://img.shields.io/github/stars/mys-lang/package-net?style=social
+.. _stars: https://github.com/mys-lang/package-net
 
 .. _Mys programming language: https://mys-lang.org
