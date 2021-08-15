@@ -3,9 +3,9 @@ from fiber import Fiber
 from fiber import current
 from fiber import sleep
 from fiber import suspend
+from io.reader import Reader
 from .. import NetError
 from .server import Server
-from io.reader import Reader
 
 c"""
 class WriteRequest {
