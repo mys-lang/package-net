@@ -207,6 +207,9 @@ class Client(Reader):
 
         """
 
+        if not self._connected:
+            return
+
         c"""
         WriteRequest *request_p = new WriteRequest();
         request_p->m_buf = uv_buf_init((char *)data.m_bytes->data(),
@@ -227,6 +230,9 @@ class Client(Reader):
         data is returned.
 
         """
+
+        if not self._connected:
+            return b""
 
         self._ensure_one_caller()
 
