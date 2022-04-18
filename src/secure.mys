@@ -15,7 +15,7 @@ static int bio_write(BIO *bio_p, const char *data_p, int dlen)
     auto data = Bytes(dlen);
 
     for (int i = 0; i < dlen; i++) {
-        data[i] = data_p[i];
+        data.get(i) = data_p[i];
     }
 
     connection_p->_io_handler->write(data);
@@ -32,7 +32,7 @@ static int bio_read(BIO *bio_p, char *data_p, int dlen)
         dlen = data.m_bytes->size();
 
         for (int i = 0; i < dlen; i++) {
-            data_p[i] = data[i];
+            data_p[i] = data.get(i);
         }
 
         connection_p->m_error = nullptr;
