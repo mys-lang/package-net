@@ -73,25 +73,6 @@ class Client(Reader):
 
         return self._secure_connection.read(size)
 
-    def read_into(self, data: bytes, start: u64, size: u64) -> u64:
-        """Read given number of bytes into given buffer. Always returns size
-        number of bytes, unless the connection was closed, in which
-        case the remaining number of bytes is returned.
-
-        """
-
-        raise NotImplementedError()
-
-    def try_read_into(self, data: bytes, start: u64, size: u64) -> u64:
-        """Try to read given number of bytes into given buffer. Returns number
-        of read bytes, which is at least one and at most given size
-        bytes, unless the connection was closed, in which case the
-        remaining number of bytes is returned.
-
-        """
-
-        raise NotImplementedError()
-
 # class _ServerCommunicationFiber(Fiber):
 #     server: TcpServer
 #
