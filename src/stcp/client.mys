@@ -5,7 +5,7 @@ from ..secure import Context as SecureContext
 from ..secure import IOHandler
 from ..tcp.client import Client as TcpClient
 from ..tcp.server import Server as TcpServer
-from io.reader import Reader
+from io import Reader
 
 class _IOHandler(IOHandler):
     _tcp_client: TcpClient

@@ -1,7 +1,7 @@
 from fiber import Fiber
 from fiber import current
 from fiber import suspend
-from io.reader import Reader
+from io import Reader
 from .. import NetError
 
 c"""

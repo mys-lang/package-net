@@ -3,7 +3,8 @@ from fiber import Fiber
 from fiber import current
 from fiber import sleep
 from fiber import suspend
-from io.reader import Reader
+from io import Reader
+from io import Writer
 from .. import NetError
 from .server import Server
 
