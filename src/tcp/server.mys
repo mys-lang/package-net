@@ -134,7 +134,7 @@ class Client(Reader):
     _fiber: Fiber
     _connected: bool
 
-    def __init__(self):
+    func __init__(self):
         c"""
         uv_tcp_init(uv_default_loop(), &m_socket);
         m_socket.data = this;
@@ -144,26 +144,26 @@ class Client(Reader):
         self._fiber = None
         self._connected = True
 
-    def __del__(self):
+    func __del__(self):
         self.disconnect()
 
-    def _ensure_one_caller(self):
+    func _ensure_one_caller(self):
         if self._fiber is not None:
             raise NetError("Only one fiber may perform blocking operations.")
 
-    def _wait_for_completion(self):
+    func _wait_for_completion(self):
         self._fiber = current()
         suspend()
         self._fiber = None
 
-    def is_connected(self) -> bool:
+    func is_connected(self) -> bool:
         """Returns true if conencted to the server, false otherwise.
 
         """
 
         return self._connected
 
-    def disconnect(self):
+    func disconnect(self):
         """Disconnect from the server.
 
         """
@@ -180,7 +180,7 @@ class Client(Reader):
         self._wait_for_completion()
         self._connected = False
 
-    def write(self, data: bytes):
+    func write(self, data: bytes):
         """Write given data to the server. Never blocks.
 
         """
@@ -199,7 +199,7 @@ class Client(Reader):
                  on_write_complete);
         """
 
-    def read(self, size: u64) -> bytes:
+    func read(self, size: u64) -> bytes:
         """Read data from the server. Always returns size number of bytes,
         unless the connection was closed, in which case the remaining
         data is returned.
@@ -226,7 +226,7 @@ class Client(Reader):
 
         return data
 
-    def try_read_into(self, data: bytes, offset: u64, size: u64) -> u64:
+    func try_read_into(self, data: bytes, offset: u64, size: u64) -> u64:
         """Try to read data from the server into given buffer. Returns number
         of read bytes, which is at least one and at most given size
         bytes, unless the connection was closed, in which case the
@@ -267,7 +267,7 @@ class Server:
     _status: i32
     _accepted_clients: [Client]
 
-    def __init__(self):
+    func __init__(self):
         c"""
         uv_tcp_init(uv_default_loop(), &m_socket);
         m_socket.data = this;
@@ -276,7 +276,7 @@ class Server:
         self._fiber = None
         self._accepted_clients = []
 
-    def listen(self, port: u32):
+    func listen(self, port: u32):
         """Start listening for clients to connect to given `port` on any
         interface.
 
@@ -293,7 +293,7 @@ class Server:
         uv_listen((uv_stream_t *)&m_socket, 10, on_client_connected);
         """
 
-    def accept(self) -> Client:
+    func accept(self) -> Client:
         """Wait for a client to connect and return it.
 
         """

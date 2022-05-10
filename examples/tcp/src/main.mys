@@ -5,7 +5,7 @@ from net.tcp.client import Client
 ADDRESS: string = "localhost"
 PORT: u32 = 59000
 
-def do_server():
+func do_server():
     server = Server()
     server.listen(PORT)
     print(f"Accepting clients on port {PORT}.")
@@ -17,7 +17,7 @@ def do_server():
         while True:
             data = client.read(1)
 
-            if data is None:
+            if len(data) == 0:
                 print("Disconnected.")
                 client.disconnect()
                 break
@@ -25,7 +25,7 @@ def do_server():
             print("Echoing byte.")
             client.write(data)
 
-def do_client():
+func do_client():
     client = Client()
 
     print(f"Connecting to {ADDRESS}:{PORT}.")
@@ -42,7 +42,7 @@ def do_client():
     print("Disconnecting.")
     client.disconnect()
 
-def main(argv: [string]):
+func main(argv: [string]):
     parser = Parser("tcp")
     parser.add_subcommand("server")
     parser.add_subcommand("client")

@@ -80,7 +80,7 @@ static BIO_METHOD *create_bio(void)
 class _Module:
     c"BIO_METHOD *m_bio_method;"
 
-    def __init__(self):
+    func __init__(self):
         c"""
         SSL_load_error_strings();
         SSL_library_init();
@@ -92,7 +92,7 @@ _MODULE: _Module = _Module()
 class Context:
     c"SSL_CTX *m_context;"
 
-    def __init__(self):
+    func __init__(self):
         c"""
         m_context = SSL_CTX_new(SSLv23_client_method());
 
@@ -105,10 +105,10 @@ class Context:
 @trait
 class IOHandler:
 
-    def write(self, data: bytes):
+    func write(self, data: bytes):
         pass
 
-    def read(self, size: u64) -> bytes:
+    func read(self, size: u64) -> bytes:
         pass
 
 class Connection:
@@ -118,7 +118,7 @@ class Connection:
     c"mys::shared_ptr<mys::Error> m_error;"
     c"SSL *m_ssl;"
 
-    def __init__(self, context: Context, io_handler: IOHandler):
+    func __init__(self, context: Context, io_handler: IOHandler):
         self._context = context
         self._io_handler = io_handler
         self._connected = False
@@ -137,14 +137,14 @@ class Connection:
         SSL_set_bio(m_ssl, bio_p, bio_p);
         """
 
-    def is_connected(self) -> bool:
+    func is_connected(self) -> bool:
         """Returns true if conencted to the server, false otherwise.
 
         """
 
         return self._connected
 
-    def connect(self):
+    func connect(self):
         """Connect to a server using given `host` and `port`.
 
         """
@@ -162,14 +162,14 @@ class Connection:
         if message is not None:
             raise NetError(f"Connect failed with '{message}'.")
 
-    def disconnect(self):
+    func disconnect(self):
         """Disconnect from the server.
 
         """
 
         c"SSL_clear(m_ssl);"
 
-    def write(self, data: bytes):
+    func write(self, data: bytes):
         """Write data to the server.
 
         """
@@ -183,7 +183,7 @@ class Connection:
         }
         """
 
-    def read(self, size: u64) -> bytes:
+    func read(self, size: u64) -> bytes:
         """Read data from the server. Always returns size number of bytes,
         unless the connection was closed, in which case the remaining
         data is returned.

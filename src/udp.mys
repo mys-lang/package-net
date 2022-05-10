@@ -23,7 +23,7 @@ class Socket:
     """
     _fiber: Fiber
 
-    def __init__(self):
+    func __init__(self):
         c"""
         uv_udp_init(uv_default_loop(), &m_socket);
         m_socket.data = this;
@@ -32,12 +32,12 @@ class Socket:
 
         self._fiber = None
 
-    def _wait_for_completion(self):
+    func _wait_for_completion(self):
         self._fiber = current()
         suspend()
         self._fiber = None
 
-    def bind(self, port: u32):
+    func bind(self, port: u32):
         """Bind the socket to given local port. Used both when sending and
         receiving packtes.
 
@@ -45,7 +45,7 @@ class Socket:
 
         raise NotImplementedError()
 
-    def connect(self, host: string, port: u32):
+    func connect(self, host: string, port: u32):
         """Connect the socket to given remote host and port. Sent packages are
         sent to this address by default.
 
@@ -53,10 +53,10 @@ class Socket:
 
         raise NotImplementedError()
 
-    def send(self, data: bytes):
+    func send(self, data: bytes):
         raise NotImplementedError()
 
-    def send_to(self, data: bytes, host: string, port: u32):
+    func send_to(self, data: bytes, host: string, port: u32):
         """Send given data to given address.
 
         """
@@ -78,8 +78,8 @@ class Socket:
 
         self._wait_for_completion()
 
-    def receive(self) -> bytes:
+    func receive(self) -> bytes:
         raise NotImplementedError()
 
-    def receive_from(self) -> (bytes, string, u32):
+    func receive_from(self) -> (bytes, string, u32):
         raise NotImplementedError()

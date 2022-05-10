@@ -19,7 +19,7 @@ TCP client
 
    from net.tcp.client import Client
 
-   def main():
+   func main():
        client = Client()
        client.connect("localhost", 5858)
        print("Connected!")
@@ -34,7 +34,7 @@ TCP server
 
    from net.tcp.server import Server
 
-   def main():
+   func main():
        server = Server()
        server.listen(5858)
        client = server.accept()

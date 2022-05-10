@@ -4,7 +4,7 @@ from net.udp import Socket
 ADDRESS: string = "localhost"
 PORT: u32 = 59001
 
-def do_server():
+func do_server():
     server = Socket()
     server.bind(PORT)
 
@@ -12,14 +12,14 @@ def do_server():
         data, host, port = server.receive_from()
         server.send_to(data, host, port)
 
-def do_client():
+func do_client():
     client = Socket()
     #client.bind(PORT + 1)
     #client.connect(ADDRESS, PORT)
     client.send_to(b"Hello!", "127.0.0.1", PORT)
     #print(client.receive())
 
-def main(argv: [string]):
+func main(argv: [string]):
     parser = Parser("udp")
     parser.add_subcommand("server")
     parser.add_subcommand("client")

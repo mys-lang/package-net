@@ -10,13 +10,13 @@ from io import Reader
 class _IOHandler(IOHandler):
     _tcp_client: TcpClient
 
-    def __init__(self, tcp_client: TcpClient):
+    func __init__(self, tcp_client: TcpClient):
         self._tcp_client = tcp_client
 
-    def write(self, data: bytes):
+    func write(self, data: bytes):
         self._tcp_client.write(data)
 
-    def read(self, size: u64) -> bytes:
+    func read(self, size: u64) -> bytes:
         return self._tcp_client.read(size)
 
 class Client(Reader):
@@ -27,22 +27,22 @@ class Client(Reader):
     _tcp_client: TcpClient
     _secure_connection: SecureConnection
 
-    def __init__(self, context: SecureContext = SecureContext()):
+    func __init__(self, context: SecureContext = SecureContext()):
         self._tcp_client = TcpClient()
         self._secure_connection = SecureConnection(context,
                                                    _IOHandler(self._tcp_client))
 
-    def __del__(self):
+    func __del__(self):
         pass
 
-    def is_connected(self) -> bool:
+    func is_connected(self) -> bool:
         """Returns true if conencted to the server, false otherwise.
 
         """
 
         return self._secure_connection.is_connected()
 
-    def connect(self, host: string, port: u32):
+    func connect(self, host: string, port: u32):
         """Connect to a server using given `host` and `port`.
 
         """
@@ -50,7 +50,7 @@ class Client(Reader):
         self._tcp_client.connect(host, port)
         self._secure_connection.connect()
 
-    def disconnect(self):
+    func disconnect(self):
         """Disconnect from the server.
 
         """
@@ -58,14 +58,14 @@ class Client(Reader):
         self._secure_connection.disconnect()
         self._tcp_client.disconnect()
 
-    def write(self, data: bytes):
+    func write(self, data: bytes):
         """Write data to the server.
 
         """
 
         self._secure_connection.write(data)
 
-    def read(self, size: u64) -> bytes:
+    func read(self, size: u64) -> bytes:
         """Read data from the server. Always returns exactly given number of
         bytes, or None if disconnected.
 
@@ -76,7 +76,7 @@ class Client(Reader):
 # class _ServerCommunicationFiber(Fiber):
 #     server: TcpServer
 #
-#     def run(self):
+#     func run(self):
 #         client = self.server.accept()
 #         assert client.is_connected()
 #         assert client.read(1) == b"1"
@@ -87,7 +87,7 @@ class Client(Reader):
 #         assert not client.is_connected()
 #
 # @test
-# def test_server_communication():
+# func test_server_communication():
 #     port: u32 = 50232
 #
 #     server = TcpServer()
