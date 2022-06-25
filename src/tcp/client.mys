@@ -182,7 +182,7 @@ class Client(Reader):
         self._wait_for_completion()
 
         if self._status != 0:
-            raise NetError("Connect failed.")
+            raise NetError(f"Connect to {host}:{port} failed.")
 
         self._connected = True
 
@@ -331,7 +331,7 @@ func test_connection_refused():
     except NetError as e:
         message = e.message
 
-    assert message == "Connect failed."
+    assert message == "Connect to localhost:50223 failed."
     assert not client.is_connected()
 
 class _ClientReadCloseFiber(Fiber):
