@@ -148,13 +148,12 @@ class Client(Reader):
         return self._connected
 
     func connect(self, host: string, port: u32):
-        """Connect to a server using given `host` and `port`.
+        """Connect to a server using given `host` and `port`. Reconnects
+        if already connected.
 
         """
 
-        if self._connected:
-            raise NetError("Already connected.")
-
+        self.disconnect()
         self._ensure_one_caller()
 
         host_utf8 = host.to_utf8()
@@ -369,6 +368,12 @@ class _ClientReUseFiber(Fiber):
             client.disconnect()
             client.disconnect()
             client.disconnect()
+            client = self.server.accept()
+            assert client.read(1) == b""
+            client.disconnect()
+            client = self.server.accept()
+            assert client.read(1) == b""
+            client.disconnect()
 
 @test
 func test_client_re_use_client():
@@ -385,6 +390,9 @@ func test_client_re_use_client():
         client.connect("localhost", port)
         client.disconnect()
         client.disconnect()
+        client.disconnect()
+        client.connect("localhost", port)
+        client.connect("localhost", port)
         client.disconnect()
 
     server_fiber.join()
