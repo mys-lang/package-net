@@ -17,12 +17,33 @@ public:
     Client *m_client;
 };
 
+static void on_close_complete(uv_handle_t *handle_p)
+{
+    Client *client_p = (Client *)(handle_p->data);
+
+    resume(client_p->_fiber);
+}
+
+static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
+{
+    Client *client_p = (Client *)(request_p->data);
+
+    uv_close((uv_handle_t*)&client_p->m_socket, on_close_complete);
+}
+
 static void on_connect_complete(uv_connect_t *request_p, int status)
 {
     Client *client_p = (Client *)(request_p->data);
 
     client_p->_status = status;
-    resume(client_p->_fiber);
+
+    if (status == 0) {
+        resume(client_p->_fiber);
+    } else {
+        uv_shutdown(&client_p->m_shutdown,
+                    (uv_stream_t *)&client_p->m_socket,
+                    on_shutdown_complete);
+    }
 }
 
 static void on_read_complete(uv_stream_t *request_p,
@@ -87,20 +108,6 @@ static void on_getaddrinfo_complete(uv_getaddrinfo_t *resolver_p,
                    (const struct sockaddr*)info_p->ai_addr,
                    on_connect_complete);
     uv_freeaddrinfo(info_p);
-}
-
-static void on_close_complete(uv_handle_t *handle_p)
-{
-    Client *client_p = (Client *)(handle_p->data);
-
-    resume(client_p->_fiber);
-}
-
-static void on_shutdown_complete(uv_shutdown_t *request_p, int status)
-{
-    Client *client_p = (Client *)(request_p->data);
-
-    uv_close((uv_handle_t*)&client_p->m_socket, on_close_complete);
 }
 """
 
@@ -415,11 +422,12 @@ class _ClientCancelFiber(Fiber):
 func test_client_cancel():
     port: u32 = 50226
 
+    server = Server()
+    server.listen(port)
+
     client_fiber = _ClientCancelFiber(port)
     client_fiber.start()
 
-    server = Server()
-    server.listen(port)
     client = server.accept()
     assert client.read(1) == b"1"
     client_fiber.cancel()

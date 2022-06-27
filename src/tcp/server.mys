@@ -17,7 +17,7 @@ static void on_client_connected(uv_stream_t *socket_p, int status)
 {
     Server *server_p = (Server *)(socket_p->data);
 
-    if (status < 0) {
+    if (status != 0) {
         return;
     }
 
@@ -213,7 +213,9 @@ class Client(Reader):
         self._read_data = bytes(size)
 
         c"""
-        if (uv_read_start((uv_stream_t*)&m_socket, read_alloc, on_read_complete) != 0) {
+        if (uv_read_start((uv_stream_t*)&m_socket,
+                          read_alloc,
+                          on_read_complete) != 0) {
             std::cout << "uv_read_start failed" << std::endl;
             exit(1);
         }
