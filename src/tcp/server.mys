@@ -188,6 +188,9 @@ class Client(Reader):
 
         """
 
+        if not self.is_connected():
+            raise NetError("Not connected.")
+
         c"""
         WriteRequest *request_p = new WriteRequest();
         request_p->m_buf = uv_buf_init((char *)data.m_bytes->data(),
