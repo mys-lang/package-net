@@ -184,8 +184,8 @@ class Client(Reader):
         self._error = False
 
     func write(self, data: bytes):
-        """Write given data to the server. Never blocks. Raises an error if the
-        client is disconnedted.
+        """Write given data to the server. Never blocks. Raises an error if
+        disconnected.
 
         """
 
