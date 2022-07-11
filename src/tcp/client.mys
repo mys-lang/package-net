@@ -62,7 +62,7 @@ static void on_read_complete(uv_stream_t *request_p,
     } else if (nread < 0) {
         completed = true;
         client_p->_read_data.m_bytes->resize(client_p->_read_offset);
-        client_p->_connected = false;
+        client_p->_error = true;
     }
 
     if (completed) {
@@ -85,7 +85,7 @@ static void on_write_complete(uv_write_t *request_p, int status)
     WriteRequest *write_request_p = (WriteRequest *)(request_p->data);
 
     if (status != 0) {
-        write_request_p->m_client->_connected = false;
+        write_request_p->m_client->_error = true;
     }
 
     delete write_request_p;
@@ -125,6 +125,7 @@ class Client(Reader):
     _fiber: Fiber
     _status: i32
     _connected: bool
+    _error: bool
 
     func __init__(self):
         c"""
@@ -134,6 +135,7 @@ class Client(Reader):
 
         self._fiber = None
         self._connected = False
+        self._error = False
 
     func __del__(self):
         self.disconnect()
@@ -152,7 +154,7 @@ class Client(Reader):
 
         """
 
-        return self._connected
+        return self._connected and not self._error
 
     func connect(self, host: string, port: u32):
         """Connect to a server using given `host` and `port`. Reconnects
@@ -207,6 +209,7 @@ class Client(Reader):
         """
 
         self._wait_for_completion()
+        self._error = False
         self._connected = False
 
     func write(self, data: bytes):
@@ -214,7 +217,7 @@ class Client(Reader):
 
         """
 
-        if not self._connected:
+        if not self.is_connected():
             return
 
         c"""
@@ -238,7 +241,7 @@ class Client(Reader):
 
         """
 
-        if not self._connected:
+        if not self.is_connected():
             return b""
 
         self._ensure_one_caller()

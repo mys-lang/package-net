@@ -53,7 +53,7 @@ static void on_read_complete(uv_stream_t *request_p,
     } else if (nread < 0) {
         completed = true;
         client_p->_read_data.m_bytes->resize(client_p->_read_offset);
-        client_p->_connected = false;
+        client_p->_error = true;
     }
 
     if (completed) {
@@ -80,7 +80,7 @@ static void on_try_read_into_complete(uv_stream_t *request_p,
     if (nread > 0) {
         client_p->_read_offset += nread;
     } else if (nread < 0) {
-        client_p->_connected = false;
+        client_p->_error = true;
     }
 
     uv_read_stop(request_p);
@@ -101,7 +101,7 @@ static void on_write_complete(uv_write_t *request_p, int status)
     WriteRequest *write_request_p = (WriteRequest *)(request_p->data);
 
     if (status != 0) {
-        write_request_p->m_client->_connected = false;
+        write_request_p->m_client->_error = true;
     }
 
     delete write_request_p;
@@ -133,6 +133,7 @@ class Client(Reader):
     _read_end: u64
     _fiber: Fiber
     _connected: bool
+    _error: bool
 
     func __init__(self):
         c"""
@@ -143,6 +144,7 @@ class Client(Reader):
 
         self._fiber = None
         self._connected = True
+        self._error = False
 
     func __del__(self):
         self.disconnect()
@@ -161,7 +163,7 @@ class Client(Reader):
 
         """
 
-        return self._connected
+        return self._connected and not self._error
 
     func disconnect(self):
         """Disconnect from the server.
@@ -179,6 +181,7 @@ class Client(Reader):
 
         self._wait_for_completion()
         self._connected = False
+        self._error = False
 
     func write(self, data: bytes):
         """Write given data to the server. Never blocks.
