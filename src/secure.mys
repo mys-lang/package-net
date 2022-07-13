@@ -102,8 +102,7 @@ class Context:
         }
         """
 
-@trait
-class IOHandler:
+trait IOHandler:
 
     func write(self, data: bytes):
         pass
