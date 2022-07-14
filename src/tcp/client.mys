@@ -298,8 +298,7 @@ class _ServerCommunicationFiber(Fiber):
         assert client.read(1) == b""
         assert not client.is_connected()
 
-@test
-func test_server_communication():
+test server_communication():
     port: u32 = 50222
 
     server = Server()
@@ -328,8 +327,7 @@ func test_server_communication():
     assert not client.is_connected()
     server_fiber.join()
 
-@test
-func test_connection_refused():
+test connection_refused():
     port: u32 = 50223
 
     client = Client()
@@ -352,8 +350,7 @@ class _ClientReadCloseFiber(Fiber):
         client.write(b"1234567890")
         client.disconnect()
 
-@test
-func test_client_read_close():
+test client_read_close():
     port: u32 = 50224
 
     server = Server()
@@ -385,8 +382,7 @@ class _ClientReUseFiber(Fiber):
             assert client.read(1) == b""
             client.disconnect()
 
-@test
-func test_client_re_use_client():
+test client_re_use_client():
     port: u32 = 50225
 
     server = Server()
@@ -421,8 +417,7 @@ class _ClientCancelFiber(Fiber):
             client.write(b"2")
             assert client.read(1) == b"3"
 
-@test
-func test_client_cancel():
+test client_cancel():
     port: u32 = 50226
 
     server = Server()

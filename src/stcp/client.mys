@@ -86,8 +86,7 @@ class Client(Reader):
 #         assert client.read(1) is None
 #         assert not client.is_connected()
 #
-# @test
-# func test_server_communication():
+# test server_communication():
 #     port: u32 = 50232
 #
 #     server = TcpServer()
