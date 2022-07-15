@@ -17,7 +17,7 @@ func do_server():
         while True:
             data = client.read(1)
 
-            if len(data) == 0:
+            if data.length() == 0:
                 print("Disconnected.")
                 client.disconnect()
                 break
