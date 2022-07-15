@@ -129,8 +129,8 @@ class Client(Reader):
     uv_shutdown_t m_shutdown;
     """
     _read_data: bytes
-    _read_offset: u64
-    _read_end: u64
+    _read_offset: i64
+    _read_end: i64
     _fiber: Fiber
     _connected: bool
     _error: bool
@@ -206,7 +206,7 @@ class Client(Reader):
                  on_write_complete);
         """
 
-    func read(self, size: u64) -> bytes:
+    func read(self, size: i64) -> bytes:
         """Read data from the server. Always returns size number of bytes,
         unless the connection was closed, in which case the remaining
         data is returned.
@@ -235,7 +235,7 @@ class Client(Reader):
 
         return data
 
-    func try_read_into(self, data: bytes, offset: u64, size: u64) -> u64:
+    func try_read_into(self, data: bytes, offset: i64, size: i64) -> i64:
         """Try to read data from the server into given buffer. Returns number
         of read bytes, which is at least one and at most given size
         bytes, unless the connection was closed, in which case the
@@ -307,7 +307,7 @@ class Server:
 
         """
 
-        if len(self._accepted_clients) == 0:
+        if self._accepted_clients.length() == 0:
             self._fiber = current()
             suspend()
 

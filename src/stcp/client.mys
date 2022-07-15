@@ -16,7 +16,7 @@ class _IOHandler(IOHandler):
     func write(self, data: bytes):
         self._tcp_client.write(data)
 
-    func read(self, size: u64) -> bytes:
+    func read(self, size: i64) -> bytes:
         return self._tcp_client.read(size)
 
 class Client(Reader):
@@ -65,7 +65,7 @@ class Client(Reader):
 
         self._secure_connection.write(data)
 
-    func read(self, size: u64) -> bytes:
+    func read(self, size: i64) -> bytes:
         """Read data from the server. Always returns exactly given number of
         bytes, or None if disconnected.
 
