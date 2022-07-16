@@ -21,7 +21,7 @@ static void on_client_connected(uv_stream_t *socket_p, int status)
         return;
     }
 
-    if (server_p->_accepted_clients->__len__() == 10) {
+    if (server_p->_accepted_clients->length() == 10) {
         return;
     }
 
