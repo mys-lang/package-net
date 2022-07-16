@@ -285,7 +285,7 @@ class Server:
         self._fiber = None
         self._accepted_clients = []
 
-    func listen(self, port: u32):
+    func listen(self, port: i64):
         """Start listening for clients to connect to given `port` on any
         interface.
 

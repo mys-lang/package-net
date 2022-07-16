@@ -37,7 +37,7 @@ class Socket:
         suspend()
         self._fiber = None
 
-    func bind(self, port: u32):
+    func bind(self, port: i64):
         """Bind the socket to given local port. Used both when sending and
         receiving packtes.
 
@@ -45,7 +45,7 @@ class Socket:
 
         raise NotImplementedError()
 
-    func connect(self, host: string, port: u32):
+    func connect(self, host: string, port: i64):
         """Connect the socket to given remote host and port. Sent packages are
         sent to this address by default.
 
@@ -56,7 +56,7 @@ class Socket:
     func send(self, data: bytes):
         raise NotImplementedError()
 
-    func send_to(self, data: bytes, host: string, port: u32):
+    func send_to(self, data: bytes, host: string, port: i64):
         """Send given data to given address.
 
         """
@@ -81,5 +81,5 @@ class Socket:
     func receive(self) -> bytes:
         raise NotImplementedError()
 
-    func receive_from(self) -> (bytes, string, u32):
+    func receive_from(self) -> (bytes, string, i64):
         raise NotImplementedError()

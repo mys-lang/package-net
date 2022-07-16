@@ -156,7 +156,7 @@ class Client(Reader):
 
         return self._connected and not self._error
 
-    func connect(self, host: string, port: u32):
+    func connect(self, host: string, port: i64):
         """Connect to a server using given `host` and `port`. Reconnects
         if already connected.
 
@@ -299,7 +299,7 @@ class _ServerCommunicationFiber(Fiber):
         assert not client.is_connected()
 
 test server_communication():
-    port: u32 = 50222
+    port = 50222
 
     server = Server()
     server.listen(port)
@@ -328,7 +328,7 @@ test server_communication():
     server_fiber.join()
 
 test connection_refused():
-    port: u32 = 50223
+    port = 50223
 
     client = Client()
 
@@ -351,7 +351,7 @@ class _ClientReadCloseFiber(Fiber):
         client.disconnect()
 
 test client_read_close():
-    port: u32 = 50224
+    port = 50224
 
     server = Server()
     server.listen(port)
@@ -383,7 +383,7 @@ class _ClientReUseFiber(Fiber):
             client.disconnect()
 
 test client_re_use_client():
-    port: u32 = 50225
+    port = 50225
 
     server = Server()
     server.listen(port)
@@ -404,7 +404,7 @@ test client_re_use_client():
     server_fiber.join()
 
 class _ClientCancelFiber(Fiber):
-    port: u32
+    port: i64
 
     func run(self):
         client = Client()
@@ -418,7 +418,7 @@ class _ClientCancelFiber(Fiber):
             assert client.read(1) == b"3"
 
 test client_cancel():
-    port: u32 = 50226
+    port = 50226
 
     server = Server()
     server.listen(port)

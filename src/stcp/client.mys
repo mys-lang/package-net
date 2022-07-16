@@ -42,7 +42,7 @@ class Client(Reader):
 
         return self._secure_connection.is_connected()
 
-    func connect(self, host: string, port: u32):
+    func connect(self, host: string, port: i64):
         """Connect to a server using given `host` and `port`.
 
         """
@@ -87,7 +87,7 @@ class Client(Reader):
 #         assert not client.is_connected()
 #
 # test server_communication():
-#     port: u32 = 50232
+#     port = 50232
 #
 #     server = TcpServer()
 #     server.listen(port)
