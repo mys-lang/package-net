@@ -3,7 +3,7 @@ from net.tcp.server import Server
 from net.tcp.client import Client
 
 ADDRESS: string = "localhost"
-PORT: u32 = 59000
+PORT: i64 = 59000
 
 func do_server():
     server = Server()

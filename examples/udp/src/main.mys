@@ -2,7 +2,7 @@ from argparse import Parser
 from net.udp import Socket
 
 ADDRESS: string = "localhost"
-PORT: u32 = 59001
+PORT: i64 = 59001
 
 func do_server():
     server = Socket()
