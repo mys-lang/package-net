@@ -122,7 +122,7 @@ class Client(Reader):
     """
     _read_data: bytes
     _read_offset: i64
-    _fiber: Fiber
+    _fiber: Fiber?
     _status: i32
     _connected: bool
     _error: bool

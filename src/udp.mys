@@ -21,7 +21,7 @@ class Socket:
     uv_udp_send_t m_send;
     uv_buf_t m_buf;
     """
-    _fiber: Fiber
+    _fiber: Fiber?
 
     func __init__(self):
         c"""

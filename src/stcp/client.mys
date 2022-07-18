@@ -66,9 +66,9 @@ class Client(Reader):
         self._secure_connection.write(data)
 
     func read(self, size: i64) -> bytes:
-        """Read data from the server. Always returns exactly given number of
-        bytes, or None if disconnected.
-
+        """Read data from the server. Always returns size number of bytes,
+        unless the connection was closed, in which case the remaining
+        data is returned.
         """
 
         return self._secure_connection.read(size)
