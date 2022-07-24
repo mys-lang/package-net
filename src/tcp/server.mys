@@ -272,7 +272,7 @@ class Server:
     c"uv_tcp_t m_socket;"
     c"uv_connect_t m_listen;"
     c"uv_buf_t m_buf;"
-    _fiber: Fiber
+    _fiber: Fiber?
     _status: i32
     _accepted_clients: [Client]
 

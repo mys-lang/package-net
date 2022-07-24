@@ -148,7 +148,7 @@ class Connection:
 
         """
 
-        message: string = None
+        message: string? = None
 
         c"""
         int res = SSL_connect(m_ssl);

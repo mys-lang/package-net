@@ -8,38 +8,20 @@ PORT: i64 = 59000
 func do_server():
     server = Server()
     server.listen(PORT)
-    print(f"Accepting clients on port {PORT}.")
 
     while True:
         client = server.accept()
-        print("Client accepted.")
+        data = client.read(2000)
+        client.write(data)
+        client.disconnect()
 
-        while True:
-            data = client.read(1)
-
-            if data.length() == 0:
-                print("Disconnected.")
-                client.disconnect()
-                break
-
-            print("Echoing byte.")
-            client.write(data)
 
 func do_client():
     client = Client()
-
-    print(f"Connecting to {ADDRESS}:{PORT}.")
     client.connect(ADDRESS, PORT)
-    print("Connected.")
-
-    data = b"Hi!"
-    print(f"Sending '{string(data)}'.")
+    data = bytes(2000)
     client.write(data)
-
     data = client.read(3)
-    print(f"Received '{string(data)}'.")
-
-    print("Disconnecting.")
     client.disconnect()
 
 func main(argv: [string]):
